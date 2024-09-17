@@ -34,7 +34,7 @@ class DSF:
 st.title("Compare RAFT vs DSF")
 
 # Inputs
-pdf_path = st.text_input("Enter the PDF file path:")
+pdf_file = st.file_uploader("Upload a PDF file", type="pdf")
 total_sample_dataset = st.number_input("Total Sample Dataset", min_value=1, step=1)
 chunk_size = st.number_input("Chunk Size of Each Dataset", min_value=1, step=1)
 total_questions_per_chunk = st.number_input("Total Number of Questions per Chunk", min_value=1, step=1)
@@ -44,18 +44,18 @@ finetuning_threshold_test = st.slider("Finetuning Threshold (Test)", 0.0, 1.0, 0
 # Process Data if input is given
 if st.button("Compare RAFT vs DSF"):
 
-    if not os.path.exists(pdf_path):
+    if not os.path.exists(pdf_file):
         st.error("PDF file path is invalid. Please enter a valid path.")
     else:
         # Process using RAFT
         st.write("Processing RAFT...")
-        raft_model = RAFT(pdf_path, chunk_size, total_questions_per_chunk, finetuning_threshold_train,
+        raft_model = RAFT(pdf_file, chunk_size, total_questions_per_chunk, finetuning_threshold_train,
                           finetuning_threshold_test)
         raft_train_data, raft_test_data = raft_model.process()
 
         # Process using DSF
         st.write("Processing DSF...")
-        dsf_model = DSF(pdf_path, chunk_size, total_questions_per_chunk, finetuning_threshold_train,
+        dsf_model = DSF(pdf_file, chunk_size, total_questions_per_chunk, finetuning_threshold_train,
                         finetuning_threshold_test)
         dsf_train_data, dsf_test_data = dsf_model.process()
 
