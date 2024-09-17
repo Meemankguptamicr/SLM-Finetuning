@@ -12,12 +12,21 @@ chunk_size = st.number_input("Chunk Size of Each Dataset", min_value=1, step=1)
 total_questions_per_chunk = st.number_input("Total Number of Questions per Chunk", min_value=1, step=1)
 finetuning_threshold_train = st.slider("Finetuning Threshold (Train)", 0.0, 1.0, 0.8)
 finetuning_threshold_test = st.slider("Finetuning Threshold (Test)", 0.0, 1.0, 0.8)
+json_file_path = ""
+
+# Process Data if input is given
+if st.button("Data Prep"):
+    if not os.path.exists(pdf_file):
+        st.error("PDF file path is invalid. Please enter a valid path.")
+    # todo data prep steps
+    st.write("Start Data Preparation")
+    json_file_path = "data/testFile"
 
 # Process Data if input is given
 if st.button("Compare RAFT vs DSF"):
 
-    if not os.path.exists(pdf_file):
-        st.error("PDF file path is invalid. Please enter a valid path.")
+    if not json_file_path:
+        st.error("data not available")
     else:
         # Process using RAFT
         st.write("Processing RAFT...")
