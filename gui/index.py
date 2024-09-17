@@ -1,36 +1,8 @@
 import streamlit as st
 import json
 import os
+from finetuning import RAFT, DSF
 
-
-# Mocked RAFT and DSF classes for processing, replace with actual implementations
-class RAFT:
-    def __init__(self, pdf_path, chunk_size, total_questions, finetuning_threshold_train, finetuning_threshold_test):
-        self.pdf_path = pdf_path
-        self.chunk_size = chunk_size
-        self.total_questions = total_questions
-        self.finetuning_threshold_train = finetuning_threshold_train
-        self.finetuning_threshold_test = finetuning_threshold_test
-
-    def process(self):
-        # Simulate generating JSON files for training and testing
-        return {"data": "RAFT Training Data"}, {"data": "RAFT Testing Data"}
-
-
-class DSF:
-    def __init__(self, pdf_path, chunk_size, total_questions, finetuning_threshold_train, finetuning_threshold_test):
-        self.pdf_path = pdf_path
-        self.chunk_size = chunk_size
-        self.total_questions = total_questions
-        self.finetuning_threshold_train = finetuning_threshold_train
-        self.finetuning_threshold_test = finetuning_threshold_test
-
-    def process(self):
-        # Simulate generating JSON files for training and testing
-        return {"data": "DSF Training Data"}, {"data": "DSF Testing Data"}
-
-
-# Streamlit App Layout
 st.title("Compare RAFT vs DSF")
 
 # Inputs
