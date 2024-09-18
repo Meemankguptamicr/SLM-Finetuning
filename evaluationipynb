@@ -1,0 +1,1634 @@
+{
+  "cells": [
+    {
+      "cell_type": "code",
+      "source": [
+        "# Ground truth\n",
+        "# Azure AI search -> retrieve the chunk based on questions\n",
+        "# Preprocessing for SLM and LLM (another SLM part of inference)\n",
+        "# Context (list of chunks) and question to inference script (It will be handled internally in scoring script)\n",
+        "# Convert the context and question into appropriate format\n",
+        "# LLM -> response\n",
+        "# SLM -> response\n",
+        "# Evaluation metrics ( LLM response, LLM context, SLM response , SLM context and ground truth) -> 100 QA pair\n",
+        "# RAGAS\n",
+        "# Answer response time.\n",
+        "# Totel token count\n",
+        "# Box plot of each metrics\n",
+        "\n"
+      ],
+      "outputs": [],
+      "execution_count": null,
+      "metadata": {
+        "gather": {
+          "logged": 1726587159694
+        }
+      }
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "# Read ground truth\n",
+        "import pandas as pd\n",
+        "import json\n",
+        "\n",
+        "# Path to your JSONL file\n",
+        "file_path = \"lab_maintenance_100_qa.jsonl\"\n",
+        "\n",
+        "# Read the JSON file as a list of dictionaries\n",
+        "with open(file_path, 'r', encoding='utf-8') as file:\n",
+        "    data = json.load(file)  # Use json.load() since it's a JSON array, not a JSONL file\n",
+        "\n",
+        "# Convert the list of dictionaries into a DataFrame\n",
+        "df = pd.DataFrame(data)\n",
+        "\n",
+        "# Display the DataFrame\n",
+        "df.head()\n"
+      ],
+      "outputs": [
+        {
+          "output_type": "execute_result",
+          "execution_count": 194,
+          "data": {
+            "text/plain": "                                            question  \\\n0  What is the main purpose of the microplate rea...   \n1  What type of test is a microplate reader prima...   \n2  Describe the wavelength range typically used b...   \n3  What are the key components required for an EL...   \n4  What are the different phases involved in an E...   \n\n                                              answer  chapter  \n0  The microplate reader is used to read the resu...        1  \n1  It is primarily used for the ELISA (Enzyme-Lin...        1  \n2  Microplate readers typically operate within a ...        1  \n3  Key components include a microplate reader, mi...        1  \n4  ELISA involves coating wells with antibodies/a...        1  ",
+            "text/html": "<div>\n<style scoped>\n    .dataframe tbody tr th:only-of-type {\n        vertical-align: middle;\n    }\n\n    .dataframe tbody tr th {\n        vertical-align: top;\n    }\n\n    .dataframe thead th {\n        text-align: right;\n    }\n</style>\n<table border=\"1\" class=\"dataframe\">\n  <thead>\n    <tr style=\"text-align: right;\">\n      <th></th>\n      <th>question</th>\n      <th>answer</th>\n      <th>chapter</th>\n    </tr>\n  </thead>\n  <tbody>\n    <tr>\n      <th>0</th>\n      <td>What is the main purpose of the microplate rea...</td>\n      <td>The microplate reader is used to read the resu...</td>\n      <td>1</td>\n    </tr>\n    <tr>\n      <th>1</th>\n      <td>What type of test is a microplate reader prima...</td>\n      <td>It is primarily used for the ELISA (Enzyme-Lin...</td>\n      <td>1</td>\n    </tr>\n    <tr>\n      <th>2</th>\n      <td>Describe the wavelength range typically used b...</td>\n      <td>Microplate readers typically operate within a ...</td>\n      <td>1</td>\n    </tr>\n    <tr>\n      <th>3</th>\n      <td>What are the key components required for an EL...</td>\n      <td>Key components include a microplate reader, mi...</td>\n      <td>1</td>\n    </tr>\n    <tr>\n      <th>4</th>\n      <td>What are the different phases involved in an E...</td>\n      <td>ELISA involves coating wells with antibodies/a...</td>\n      <td>1</td>\n    </tr>\n  </tbody>\n</table>\n</div>"
+          },
+          "metadata": {}
+        }
+      ],
+      "execution_count": 194,
+      "metadata": {
+        "gather": {
+          "logged": 1726656859321
+        },
+        "jupyter": {
+          "outputs_hidden": false,
+          "source_hidden": false
+        },
+        "nteract": {
+          "transient": {
+            "deleting": false
+          }
+        }
+      }
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "# import json\n",
+        "# import urllib.request\n",
+        "# import os\n",
+        "# import ssl\n",
+        "\n",
+        "# def allowSelfSignedHttps(allowed):\n",
+        "#     \"\"\"Bypass the server certificate verification on the client side.\"\"\"\n",
+        "#     if allowed and not os.environ.get('PYTHONHTTPSVERIFY', '') and getattr(ssl, '_create_unverified_context', None):\n",
+        "#         ssl._create_default_https_context = ssl._create_unverified_context\n",
+        "\n",
+        "# allowSelfSignedHttps(True)  # This is needed if you use self-signed certificates.\n",
+        "\n",
+        "# def send_chat_input(chat_input):\n",
+        "#     \"\"\"Send a chat input to the API and return the parsed response.\"\"\"\n",
+        "#     # API request payload\n",
+        "#     data = {\n",
+        "#         \"chat_input\": chat_input,\n",
+        "#         \"chat_history\": []  # Modify this if you have previous chat history\n",
+        "#     }\n",
+        "    \n",
+        "#     # API credentials\n",
+        "#     api_key = \"OzYEqfLg8ueVePHKun3UejfBMLphos4N\"  # Replace with your actual API key\n",
+        "#     url = \"https://ws-meemankraft-gcmko.eastus2.inference.ml.azure.com/score\"  # Replace with the actual API URL\n",
+        "\n",
+        "#     # Prepare request body and headers\n",
+        "#     body = str.encode(json.dumps(data))\n",
+        "    \n",
+        "#     if not api_key:\n",
+        "#         raise Exception(\"A valid API key is required to invoke the endpoint.\")\n",
+        "    \n",
+        "#     headers = {'Content-Type': 'application/json', 'Authorization': 'Bearer ' + api_key}\n",
+        "#     req = urllib.request.Request(url, body, headers)\n",
+        "    \n",
+        "#     # Initialize response structure\n",
+        "#     text_docs = []\n",
+        "#     response_dict = {}\n",
+        "\n",
+        "#     try:\n",
+        "#         # Make the API call\n",
+        "#         response = urllib.request.urlopen(req)\n",
+        "#         result = response.read().decode('utf-8')\n",
+        "        \n",
+        "#         # Parse the JSON response\n",
+        "#         result_dict = json.loads(result)\n",
+        "#         chat_output = result_dict.get('chat_output', {})\n",
+        "        \n",
+        "#         # Extract chat response data\n",
+        "#         response_output = chat_output.get('response', 'No response found')\n",
+        "#         user_question = chat_output.get('user_question', 'No question found')\n",
+        "#         source_documents = chat_output.get('source_documents', [])\n",
+        "        \n",
+        "#         # Collect source document texts\n",
+        "#         for doc in source_documents:\n",
+        "#             text = doc.get('text', 'No text found')\n",
+        "#             text_docs.append(text)\n",
+        "        \n",
+        "#         # Build the response dictionary\n",
+        "#         response_dict['response_output'] = response_output\n",
+        "#         response_dict['user_question'] = user_question\n",
+        "#         response_dict['source_documents'] = text_docs\n",
+        "\n",
+        "#         return response_dict\n",
+        "\n",
+        "#     except urllib.error.HTTPError as error:\n",
+        "#         print(f\"The request failed with status code: {error.code}\")\n",
+        "#         print(error.info())\n",
+        "#         print(error.read().decode(\"utf8\", 'ignore'))\n",
+        "#         return None\n",
+        "\n",
+        "# # Example usage: Call the function with different chat inputs\n",
+        "# z = send_chat_input(\"What is the main purpose of the microplate reader?\")\n",
+        "# print(z)\n"
+      ],
+      "outputs": [],
+      "execution_count": 180,
+      "metadata": {
+        "jupyter": {
+          "source_hidden": false,
+          "outputs_hidden": false
+        },
+        "nteract": {
+          "transient": {
+            "deleting": false
+          }
+        },
+        "gather": {
+          "logged": 1726656029757
+        }
+      }
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "df = df.head(3)\n",
+        "df"
+      ],
+      "outputs": [
+        {
+          "output_type": "execute_result",
+          "execution_count": 158,
+          "data": {
+            "text/plain": "                                            question  \\\n0  What is the main purpose of the microplate rea...   \n1  What type of test is a microplate reader prima...   \n2  Describe the wavelength range typically used b...   \n\n                                              answer  chapter  \n0  The microplate reader is used to read the resu...        1  \n1  It is primarily used for the ELISA (Enzyme-Lin...        1  \n2  Microplate readers typically operate within a ...        1  ",
+            "text/html": "<div>\n<style scoped>\n    .dataframe tbody tr th:only-of-type {\n        vertical-align: middle;\n    }\n\n    .dataframe tbody tr th {\n        vertical-align: top;\n    }\n\n    .dataframe thead th {\n        text-align: right;\n    }\n</style>\n<table border=\"1\" class=\"dataframe\">\n  <thead>\n    <tr style=\"text-align: right;\">\n      <th></th>\n      <th>question</th>\n      <th>answer</th>\n      <th>chapter</th>\n    </tr>\n  </thead>\n  <tbody>\n    <tr>\n      <th>0</th>\n      <td>What is the main purpose of the microplate rea...</td>\n      <td>The microplate reader is used to read the resu...</td>\n      <td>1</td>\n    </tr>\n    <tr>\n      <th>1</th>\n      <td>What type of test is a microplate reader prima...</td>\n      <td>It is primarily used for the ELISA (Enzyme-Lin...</td>\n      <td>1</td>\n    </tr>\n    <tr>\n      <th>2</th>\n      <td>Describe the wavelength range typically used b...</td>\n      <td>Microplate readers typically operate within a ...</td>\n      <td>1</td>\n    </tr>\n  </tbody>\n</table>\n</div>"
+          },
+          "metadata": {}
+        }
+      ],
+      "execution_count": 158,
+      "metadata": {
+        "jupyter": {
+          "source_hidden": false,
+          "outputs_hidden": false
+        },
+        "nteract": {
+          "transient": {
+            "deleting": false
+          }
+        },
+        "gather": {
+          "logged": 1726653264033
+        }
+      }
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "# # Apply the function to each row in the DataFrame\n",
+        "# df['LLM_response'] = df['question'].apply(lambda q: send_chat_input(q))\n",
+        "\n",
+        "# # If you want to separate the response_output and source_documents into different columns\n",
+        "# df['response_output'] = df['LLM_response'].apply(lambda x: x['response_output'])\n",
+        "# df['source_documents'] = df['LLM_response'].apply(lambda x: x['source_documents'])\n",
+        "\n",
+        "# # Drop the intermediate column if no longer needed\n",
+        "# # df = df.drop(columns=['LLM_response'])"
+      ],
+      "outputs": [],
+      "execution_count": 181,
+      "metadata": {
+        "jupyter": {
+          "source_hidden": false,
+          "outputs_hidden": false
+        },
+        "nteract": {
+          "transient": {
+            "deleting": false
+          }
+        },
+        "gather": {
+          "logged": 1726656042942
+        }
+      }
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "import pandas as pd\n",
+        "import nltk\n",
+        "from nltk.translate.bleu_score import sentence_bleu, SmoothingFunction\n",
+        "from rouge_score import rouge_scorer\n",
+        "from bert_score import score\n",
+        "\n",
+        "nltk.download('punkt')\n",
+        "\n",
+        "# Function to calculate all metrics\n",
+        "def calculate_metrics(ground_truth, llm_response):\n",
+        "    # ROUGE score calculation\n",
+        "    def calculate_rouge(reference, hypothesis):\n",
+        "        scorer = rouge_scorer.RougeScorer(['rouge1', 'rouge2', 'rougeL'], use_stemmer=True)\n",
+        "        scores = scorer.score(reference, hypothesis)\n",
+        "        return scores\n",
+        "\n",
+        "    # BERTScore calculation\n",
+        "    def calculate_bertscore(reference, hypothesis):\n",
+        "        P, R, F1 = score([hypothesis], [reference], lang=\"en\", verbose=False)\n",
+        "        return {\n",
+        "            'precision': P.item(),\n",
+        "            'recall': R.item(),\n",
+        "            'f1': F1.item()\n",
+        "        }\n",
+        "\n",
+        "    # Calculating BLEU\n",
+        "    # bleu = calculate_bleu(ground_truth, llm_response)\n",
+        "    \n",
+        "    # Calculating ROUGE\n",
+        "    rouge_scores = calculate_rouge(ground_truth, llm_response)\n",
+        "    \n",
+        "    # Calculating BERTScore\n",
+        "    bertscore = calculate_bertscore(ground_truth, llm_response)\n",
+        "    \n",
+        "    # Combine all results\n",
+        "    results = {\n",
+        "        # 'BLEU': bleu,\n",
+        "        'ROUGE-1': rouge_scores['rouge1'].fmeasure,\n",
+        "        'ROUGE-2': rouge_scores['rouge2'].fmeasure,\n",
+        "        'ROUGE-L': rouge_scores['rougeL'].fmeasure,\n",
+        "        'BERTScore Precision': bertscore['precision'],\n",
+        "        'BERTScore Recall': bertscore['recall'],\n",
+        "        'BERTScore F1': bertscore['f1']\n",
+        "    }\n",
+        "    \n",
+        "    return results\n",
+        "\n",
+        "df[['ROUGE-1', 'ROUGE-2', 'ROUGE-L', 'BERTScore Precision', 'BERTScore Recall', 'BERTScore F1']] = df.apply(\n",
+        "    lambda row: pd.Series(calculate_metrics(row['answer'], row['LLM_response'])),\n",
+        "    axis=1\n",
+        ")"
+      ],
+      "outputs": [],
+      "execution_count": null,
+      "metadata": {
+        "jupyter": {
+          "source_hidden": false,
+          "outputs_hidden": false
+        },
+        "nteract": {
+          "transient": {
+            "deleting": false
+          }
+        },
+        "gather": {
+          "logged": 1726585163745
+        }
+      }
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "import os\n",
+        "import time\n",
+        "import urllib.request\n",
+        "import json\n",
+        "import ssl\n",
+        "from deepeval.metrics import AnswerRelevancyMetric, ContextualRelevancyMetric, ContextualPrecisionMetric, ContextualRecallMetric\n",
+        "from deepeval.test_case import LLMTestCase\n",
+        "from deepeval.models.base_model import DeepEvalBaseLLM\n",
+        "from langchain_openai import AzureChatOpenAI\n",
+        "\n",
+        "class AzureOpenAIEvaluator(DeepEvalBaseLLM):\n",
+        "    def __init__(\n",
+        "        self,\n",
+        "        model\n",
+        "    ):\n",
+        "        self.model = model\n",
+        "\n",
+        "    def load_model(self):\n",
+        "        return self.model\n",
+        "\n",
+        "    def generate(self, prompt: str) -> str:\n",
+        "        chat_model = self.load_model()\n",
+        "        return chat_model.invoke(prompt).content\n",
+        "\n",
+        "    async def a_generate(self, prompt: str) -> str:\n",
+        "        chat_model = self.load_model()\n",
+        "        res = await chat_model.ainvoke(prompt)\n",
+        "        return res.content\n",
+        "\n",
+        "    def get_model_name(self):\n",
+        "        return \"Custom Azure OpenAI Model\"\n",
+        "    \n",
+        "\n",
+        "class RAG_Evaluator():\n",
+        "    def __init__(self, framework):\n",
+        "        self.framework = framework\n",
+        "        if self.framework==\"deepeval\":\n",
+        "            custom_model = AzureChatOpenAI(\n",
+        "                # openai_api_version=os.getenv(\"AZURE_OPENAI_API_VERSION\"),\n",
+        "                # azure_deployment=os.getenv(\"AZURE_OPENAI_CHATGPT_DEPLOYMENT\"),\n",
+        "                # azure_endpoint=os.getenv(\"AZURE_OPENAI_ENDPOINT\"),\n",
+        "                # openai_api_key=os.getenv(\"AZURE_OPENAI_API_KEY\"),\n",
+        "                openai_api_version=\"2023-03-15-preview\",\n",
+        "                azure_deployment=\"gpt4omini\",\n",
+        "                azure_endpoint=\"https://aoi-meemank.openai.azure.com\",\n",
+        "                openai_api_key=\"772624b8d13c4d19a12e77108401695e\",\n",
+        "            )\n",
+        "            azure_openai = AzureOpenAIEvaluator(model=custom_model)\n",
+        "            self.answer_relevancy_metric = AnswerRelevancyMetric(\n",
+        "                model=azure_openai,\n",
+        "                threshold=0.7,\n",
+        "                include_reason=True\n",
+        "            )\n",
+        "            self.context_relevancy_metric = ContextualRelevancyMetric(\n",
+        "                model=azure_openai,\n",
+        "                threshold=0.7,\n",
+        "                include_reason=True\n",
+        "            )\n",
+        "            self.context_precision_metric = ContextualPrecisionMetric(\n",
+        "                threshold=0.7,\n",
+        "                model=azure_openai,\n",
+        "                include_reason=True\n",
+        "            )\n",
+        "            self.context_recall_metric = ContextualRecallMetric(\n",
+        "                threshold=0.7,\n",
+        "                model=azure_openai,\n",
+        "                include_reason=True\n",
+        "            )\n",
+        "\n",
+        "    \n",
+        "    def check_answer_relevancy(self, question, actual_output):\n",
+        "        score = \"\"\n",
+        "        reason = \"\"\n",
+        "\n",
+        "        if self.framework==\"deepeval\":\n",
+        "            test_case = LLMTestCase(\n",
+        "                input=question,\n",
+        "                actual_output=actual_output\n",
+        "            )\n",
+        "            self.answer_relevancy_metric.measure(test_case)\n",
+        "            score = self.answer_relevancy_metric.score\n",
+        "            reason = self.answer_relevancy_metric.reason\n",
+        "\n",
+        "        return score, reason\n",
+        "\n",
+        "\n",
+        "    def check_contextual_relevancy(self, question, actual_output, retrieval_contexts):\n",
+        "        score = \"\"\n",
+        "        reason = \"\"\n",
+        "    \n",
+        "        if self.framework==\"deepeval\":\n",
+        "            test_case = LLMTestCase(\n",
+        "                input=question,\n",
+        "                actual_output=actual_output,\n",
+        "                retrieval_context=retrieval_contexts\n",
+        "            )\n",
+        "            self.context_relevancy_metric.measure(test_case)\n",
+        "            score = self.context_relevancy_metric.score\n",
+        "            reason = self.context_relevancy_metric.reason\n",
+        "\n",
+        "        return score, reason\n",
+        "    \n",
+        "\n",
+        "    def check_contextual_precision(self, question, actual_output, expected_output, retrieval_contexts):\n",
+        "        score = \"\"\n",
+        "        reason = \"\"\n",
+        "    \n",
+        "        if self.framework==\"deepeval\":\n",
+        "            test_case = LLMTestCase(\n",
+        "                input=question,\n",
+        "                actual_output=actual_output,\n",
+        "                expected_output=expected_output,\n",
+        "                retrieval_context=retrieval_contexts\n",
+        "            )\n",
+        "            self.context_precision_metric.measure(test_case)\n",
+        "            score = self.context_precision_metric.score\n",
+        "            reason = self.context_precision_metric.reason\n",
+        "\n",
+        "        return score, reason\n",
+        "    \n",
+        "\n",
+        "    def check_contextual_recall(self, question, actual_output, expected_output, retrieval_contexts):\n",
+        "        score = \"\"\n",
+        "        reason = \"\"\n",
+        "    \n",
+        "        if self.framework==\"deepeval\":\n",
+        "            test_case = LLMTestCase(\n",
+        "                input=question,\n",
+        "                actual_output=actual_output,\n",
+        "                expected_output=expected_output,\n",
+        "                retrieval_context=retrieval_contexts\n",
+        "            )\n",
+        "            self.context_recall_metric.measure(test_case)\n",
+        "            score = self.context_recall_metric.score\n",
+        "            reason = self.context_recall_metric.reason\n",
+        "\n",
+        "        return score, reason\n",
+        "\n",
+        "\n",
+        "    def get_evaluation(self, question, expected_response, rag_response):\n",
+        "        rag_response_str = rag_response[\"response_output\"]\n",
+        "        metrics = {}\n",
+        "        answer_relevancy_score, answer_relevancy_reason = self.check_answer_relevancy(question, rag_response_str)\n",
+        "        \n",
+        "        time.sleep(5)\n",
+        "\n",
+        "        relevant_contexts = []\n",
+        "        for source_doc in rag_response[\"source_documents\"]:\n",
+        "            relevant_contexts.append(source_doc)\n",
+        "        print(\"relevant_contexts\",relevant_contexts)\n",
+        "        # relevant_contexts=rag_response[\"source_documents\"]\n",
+        "        contextual_relevancy_score, contextual_relevancy_reason = self.check_contextual_relevancy(question, rag_response_str, relevant_contexts)\n",
+        "        time.sleep(5)\n",
+        "        if expected_response != \"\":\n",
+        "            contextual_precision_score, contextual_precision_reason = self.check_contextual_precision(question, rag_response_str, expected_response, relevant_contexts)\n",
+        "            time.sleep(5)\n",
+        "            contextual_recall_score, contextual_recall_reason = self.check_contextual_recall(question, rag_response_str, expected_response, relevant_contexts)\n",
+        "            time.sleep(5)\n",
+        "        else:\n",
+        "            contextual_precision_score, contextual_precision_reason = 0.0, \"NA\"\n",
+        "            contextual_recall_score, contextual_recall_reason = 0.0, \"NA\"\n",
+        "         \n",
+        "        metrics['answer_relevancy_score'] = answer_relevancy_score\n",
+        "        metrics['answer_relevancy_reason'] = answer_relevancy_reason\n",
+        "        metrics['contextual_relevancy_score'] = contextual_relevancy_score\n",
+        "        metrics['contextual_relevancy_reason'] = contextual_relevancy_reason\n",
+        "        metrics['contextual_precision_score'] = contextual_precision_score\n",
+        "        metrics['contextual_precision_reason'] = contextual_precision_reason\n",
+        "        metrics['contextual_recall_score'] = contextual_recall_score\n",
+        "        metrics['contextual_recall_reason'] = contextual_recall_reason\n",
+        "        return metrics\n",
+        "\n",
+        "    def get_rag_response(self, question):\n",
+        "        response = \"\"\n",
+        "        final_dict = {}\n",
+        "        def allowSelfSignedHttps(allowed):\n",
+        "                \"\"\"Bypass the server certificate verification on the client side.\"\"\"\n",
+        "                if allowed and not os.environ.get('PYTHONHTTPSVERIFY', '') and getattr(ssl, '_create_unverified_context', None):\n",
+        "                    ssl._create_default_https_context = ssl._create_unverified_context\n",
+        "\n",
+        "        allowSelfSignedHttps(True)  # This is needed if you use self-signed certificates.\n",
+        "\n",
+        "        def send_chat_input_LLM(question):\n",
+        "            \"\"\"Send a chat input to the API and return the parsed response.\"\"\"\n",
+        "            # API request payload\n",
+        "            data = {\n",
+        "                \"chat_input\": question,\n",
+        "                \"chat_history\": []  # Modify this if you have previous chat history\n",
+        "            }\n",
+        "            \n",
+        "            # API credentials\n",
+        "            api_key = \"OzYEqfLg8ueVePHKun3UejfBMLphos4N\"  # Replace with your actual API key\n",
+        "            url = \"https://ws-meemankraft-gcmko.eastus2.inference.ml.azure.com/score\"  # Replace with the actual API URL\n",
+        "\n",
+        "            # Prepare request body and headers\n",
+        "            body = str.encode(json.dumps(data))\n",
+        "            \n",
+        "            if not api_key:\n",
+        "                raise Exception(\"A valid API key is required to invoke the endpoint.\")\n",
+        "            \n",
+        "            headers = {'Content-Type': 'application/json', 'Authorization': 'Bearer ' + api_key}\n",
+        "            req = urllib.request.Request(url, body, headers)\n",
+        "            \n",
+        "            # Initialize response structure\n",
+        "            text_docs = []\n",
+        "            final_dict = {}\n",
+        "\n",
+        "            try:\n",
+        "                # Make the API call\n",
+        "                response = urllib.request.urlopen(req)\n",
+        "                result = response.read().decode('utf-8')\n",
+        "                \n",
+        "                # Parse the JSON response\n",
+        "                result_dict = json.loads(result)\n",
+        "                chat_output = result_dict.get('chat_output', {})\n",
+        "                \n",
+        "                # Extract chat response data\n",
+        "                response_output = chat_output.get('response', 'No response found')\n",
+        "                user_question = chat_output.get('user_question', 'No question found')\n",
+        "                source_documents = chat_output.get('source_documents', [])\n",
+        "                \n",
+        "                # Collect source document texts\n",
+        "                for doc in source_documents:\n",
+        "                    text = doc.get('text', 'No text found')\n",
+        "                    text_docs.append(text)\n",
+        "                \n",
+        "                # Build the response dictionary\n",
+        "                final_dict['response_output'] = response_output\n",
+        "                final_dict['user_question'] = user_question\n",
+        "                final_dict['source_documents'] = text_docs\n",
+        "\n",
+        "                return final_dict\n",
+        "\n",
+        "            except urllib.error.HTTPError as error:\n",
+        "                print(f\"The request failed with status code: {error.code}\")\n",
+        "                print(error.info())\n",
+        "                print(error.read().decode(\"utf8\", 'ignore'))\n",
+        "                return None          \n",
+        "            \n",
+        "            return response_dict\n",
+        "        response_dictionary = send_chat_input_LLM(question)\n",
+        "        return response_dictionary"
+      ],
+      "outputs": [],
+      "execution_count": 163,
+      "metadata": {
+        "jupyter": {
+          "source_hidden": false,
+          "outputs_hidden": false
+        },
+        "nteract": {
+          "transient": {
+            "deleting": false
+          }
+        },
+        "gather": {
+          "logged": 1726653323923
+        }
+      }
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "evaluator = RAG_Evaluator(framework = \"deepeval\")"
+      ],
+      "outputs": [],
+      "execution_count": 150,
+      "metadata": {
+        "jupyter": {
+          "source_hidden": false,
+          "outputs_hidden": false
+        },
+        "nteract": {
+          "transient": {
+            "deleting": false
+          }
+        },
+        "gather": {
+          "logged": 1726653145139
+        }
+      }
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "# Apply the function to each row in the DataFrame\n",
+        "df['LLM_response'] = df.apply(lambda row: evaluator.get_rag_response(row['question']),axis=1)"
+      ],
+      "outputs": [],
+      "execution_count": 178,
+      "metadata": {
+        "jupyter": {
+          "source_hidden": false,
+          "outputs_hidden": false
+        },
+        "nteract": {
+          "transient": {
+            "deleting": false
+          }
+        },
+        "gather": {
+          "logged": 1726655876496
+        }
+      }
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "# # If you want to separate the response_output and source_documents into different columns\n",
+        "df['response_output_LLM'] = df['LLM_response'].apply(lambda x: x['response_output'])\n",
+        "df['source_documents_LLM'] = df['LLM_response'].apply(lambda x: x['source_documents'])"
+      ],
+      "outputs": [],
+      "execution_count": 182,
+      "metadata": {
+        "jupyter": {
+          "source_hidden": false,
+          "outputs_hidden": false
+        },
+        "nteract": {
+          "transient": {
+            "deleting": false
+          }
+        },
+        "gather": {
+          "logged": 1726656261578
+        }
+      }
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "# Apply the function to each row in the DataFrame\n",
+        "df['deepeval_response'] = df.apply(lambda row: evaluator.get_evaluation(row['question'], row['answer'], row['LLM_response']), axis=1)"
+      ],
+      "outputs": [
+        {
+          "output_type": "display_data",
+          "data": {
+            "text/plain": "✨ You're running DeepEval's latest \u001b[38;2;106;0;255mContextual Recall Metric\u001b[0m! \u001b[38;2;55;65;81m(using Custom Azure OpenAI Model, strict=False, asyn…\u001b[0m\n",
+            "text/html": "<pre style=\"white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace\">✨ You're running DeepEval's latest <span style=\"color: #6a00ff; text-decoration-color: #6a00ff\">Contextual Recall Metric</span>! <span style=\"color: #374151; text-decoration-color: #374151\">(using Custom Azure OpenAI Model, strict=False, asyn…</span>\n</pre>\n"
+          },
+          "metadata": {}
+        },
+        {
+          "output_type": "display_data",
+          "data": {
+            "text/plain": "",
+            "text/html": "<pre style=\"white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace\"></pre>\n"
+          },
+          "metadata": {}
+        },
+        {
+          "output_type": "display_data",
+          "data": {
+            "text/plain": "\n",
+            "text/html": "<pre style=\"white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace\">\n</pre>\n"
+          },
+          "metadata": {}
+        }
+      ],
+      "execution_count": 170,
+      "metadata": {
+        "jupyter": {
+          "source_hidden": false,
+          "outputs_hidden": false
+        },
+        "nteract": {
+          "transient": {
+            "deleting": false
+          }
+        },
+        "gather": {
+          "logged": 1726653629174
+        }
+      }
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "\n",
+        "# If you want to separate the response_output and source_documents into different columns\n",
+        "df['answer_relevancy_score'] = df['deepeval_response'].apply(lambda x: x['answer_relevancy_score'])\n",
+        "df['contextual_relevancy_score'] = df['deepeval_response'].apply(lambda x: x['contextual_relevancy_score'])\n",
+        "df['contextual_precision_score'] = df['deepeval_response'].apply(lambda x: x['contextual_precision_score'])\n",
+        "df['contextual_recall_score'] = df['deepeval_response'].apply(lambda x: x['contextual_recall_score'])\n",
+        "# df = df.drop(columns=['deepeval_response'])"
+      ],
+      "outputs": [],
+      "execution_count": 172,
+      "metadata": {
+        "jupyter": {
+          "source_hidden": false,
+          "outputs_hidden": false
+        },
+        "nteract": {
+          "transient": {
+            "deleting": false
+          }
+        },
+        "gather": {
+          "logged": 1726653708196
+        }
+      }
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "df['source_documents'][0]"
+      ],
+      "outputs": [
+        {
+          "output_type": "error",
+          "ename": "KeyError",
+          "evalue": "'source_documents'",
+          "traceback": [
+            "\u001b[0;31m---------------------------------------------------------------------------\u001b[0m",
+            "\u001b[0;31mKeyError\u001b[0m                                  Traceback (most recent call last)",
+            "File \u001b[0;32m/anaconda/envs/azureml_py38/lib/python3.9/site-packages/pandas/core/indexes/base.py:3805\u001b[0m, in \u001b[0;36mIndex.get_loc\u001b[0;34m(self, key)\u001b[0m\n\u001b[1;32m   3804\u001b[0m \u001b[38;5;28;01mtry\u001b[39;00m:\n\u001b[0;32m-> 3805\u001b[0m     \u001b[38;5;28;01mreturn\u001b[39;00m \u001b[38;5;28;43mself\u001b[39;49m\u001b[38;5;241;43m.\u001b[39;49m\u001b[43m_engine\u001b[49m\u001b[38;5;241;43m.\u001b[39;49m\u001b[43mget_loc\u001b[49m\u001b[43m(\u001b[49m\u001b[43mcasted_key\u001b[49m\u001b[43m)\u001b[49m\n\u001b[1;32m   3806\u001b[0m \u001b[38;5;28;01mexcept\u001b[39;00m \u001b[38;5;167;01mKeyError\u001b[39;00m \u001b[38;5;28;01mas\u001b[39;00m err:\n",
+            "File \u001b[0;32mindex.pyx:167\u001b[0m, in \u001b[0;36mpandas._libs.index.IndexEngine.get_loc\u001b[0;34m()\u001b[0m\n",
+            "File \u001b[0;32mindex.pyx:196\u001b[0m, in \u001b[0;36mpandas._libs.index.IndexEngine.get_loc\u001b[0;34m()\u001b[0m\n",
+            "File \u001b[0;32mpandas/_libs/hashtable_class_helper.pxi:7081\u001b[0m, in \u001b[0;36mpandas._libs.hashtable.PyObjectHashTable.get_item\u001b[0;34m()\u001b[0m\n",
+            "File \u001b[0;32mpandas/_libs/hashtable_class_helper.pxi:7089\u001b[0m, in \u001b[0;36mpandas._libs.hashtable.PyObjectHashTable.get_item\u001b[0;34m()\u001b[0m\n",
+            "\u001b[0;31mKeyError\u001b[0m: 'source_documents'",
+            "\nThe above exception was the direct cause of the following exception:\n",
+            "\u001b[0;31mKeyError\u001b[0m                                  Traceback (most recent call last)",
+            "Cell \u001b[0;32mIn[206], line 1\u001b[0m\n\u001b[0;32m----> 1\u001b[0m \u001b[43mdf\u001b[49m\u001b[43m[\u001b[49m\u001b[38;5;124;43m'\u001b[39;49m\u001b[38;5;124;43msource_documents\u001b[39;49m\u001b[38;5;124;43m'\u001b[39;49m\u001b[43m]\u001b[49m[\u001b[38;5;241m0\u001b[39m]\n",
+            "File \u001b[0;32m/anaconda/envs/azureml_py38/lib/python3.9/site-packages/pandas/core/frame.py:4102\u001b[0m, in \u001b[0;36mDataFrame.__getitem__\u001b[0;34m(self, key)\u001b[0m\n\u001b[1;32m   4100\u001b[0m \u001b[38;5;28;01mif\u001b[39;00m \u001b[38;5;28mself\u001b[39m\u001b[38;5;241m.\u001b[39mcolumns\u001b[38;5;241m.\u001b[39mnlevels \u001b[38;5;241m>\u001b[39m \u001b[38;5;241m1\u001b[39m:\n\u001b[1;32m   4101\u001b[0m     \u001b[38;5;28;01mreturn\u001b[39;00m \u001b[38;5;28mself\u001b[39m\u001b[38;5;241m.\u001b[39m_getitem_multilevel(key)\n\u001b[0;32m-> 4102\u001b[0m indexer \u001b[38;5;241m=\u001b[39m \u001b[38;5;28;43mself\u001b[39;49m\u001b[38;5;241;43m.\u001b[39;49m\u001b[43mcolumns\u001b[49m\u001b[38;5;241;43m.\u001b[39;49m\u001b[43mget_loc\u001b[49m\u001b[43m(\u001b[49m\u001b[43mkey\u001b[49m\u001b[43m)\u001b[49m\n\u001b[1;32m   4103\u001b[0m \u001b[38;5;28;01mif\u001b[39;00m is_integer(indexer):\n\u001b[1;32m   4104\u001b[0m     indexer \u001b[38;5;241m=\u001b[39m [indexer]\n",
+            "File \u001b[0;32m/anaconda/envs/azureml_py38/lib/python3.9/site-packages/pandas/core/indexes/base.py:3812\u001b[0m, in \u001b[0;36mIndex.get_loc\u001b[0;34m(self, key)\u001b[0m\n\u001b[1;32m   3807\u001b[0m     \u001b[38;5;28;01mif\u001b[39;00m \u001b[38;5;28misinstance\u001b[39m(casted_key, \u001b[38;5;28mslice\u001b[39m) \u001b[38;5;129;01mor\u001b[39;00m (\n\u001b[1;32m   3808\u001b[0m         \u001b[38;5;28misinstance\u001b[39m(casted_key, abc\u001b[38;5;241m.\u001b[39mIterable)\n\u001b[1;32m   3809\u001b[0m         \u001b[38;5;129;01mand\u001b[39;00m \u001b[38;5;28many\u001b[39m(\u001b[38;5;28misinstance\u001b[39m(x, \u001b[38;5;28mslice\u001b[39m) \u001b[38;5;28;01mfor\u001b[39;00m x \u001b[38;5;129;01min\u001b[39;00m casted_key)\n\u001b[1;32m   3810\u001b[0m     ):\n\u001b[1;32m   3811\u001b[0m         \u001b[38;5;28;01mraise\u001b[39;00m InvalidIndexError(key)\n\u001b[0;32m-> 3812\u001b[0m     \u001b[38;5;28;01mraise\u001b[39;00m \u001b[38;5;167;01mKeyError\u001b[39;00m(key) \u001b[38;5;28;01mfrom\u001b[39;00m \u001b[38;5;21;01merr\u001b[39;00m\n\u001b[1;32m   3813\u001b[0m \u001b[38;5;28;01mexcept\u001b[39;00m \u001b[38;5;167;01mTypeError\u001b[39;00m:\n\u001b[1;32m   3814\u001b[0m     \u001b[38;5;66;03m# If we have a listlike key, _check_indexing_error will raise\u001b[39;00m\n\u001b[1;32m   3815\u001b[0m     \u001b[38;5;66;03m#  InvalidIndexError. Otherwise we fall through and re-raise\u001b[39;00m\n\u001b[1;32m   3816\u001b[0m     \u001b[38;5;66;03m#  the TypeError.\u001b[39;00m\n\u001b[1;32m   3817\u001b[0m     \u001b[38;5;28mself\u001b[39m\u001b[38;5;241m.\u001b[39m_check_indexing_error(key)\n",
+            "\u001b[0;31mKeyError\u001b[0m: 'source_documents'"
+          ]
+        }
+      ],
+      "execution_count": 206,
+      "metadata": {
+        "jupyter": {
+          "source_hidden": false,
+          "outputs_hidden": false
+        },
+        "nteract": {
+          "transient": {
+            "deleting": false
+          }
+        },
+        "gather": {
+          "logged": 1726663704287
+        }
+      }
+    },
+    {
+      "cell_type": "markdown",
+      "source": [
+        "# New"
+      ],
+      "metadata": {
+        "nteract": {
+          "transient": {
+            "deleting": false
+          }
+        }
+      }
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "import time\n",
+        "import pandas as pd\n",
+        "import nltk\n",
+        "from nltk.translate.bleu_score import sentence_bleu, SmoothingFunction\n",
+        "from rouge_score import rouge_scorer\n",
+        "from bert_score import score\n",
+        "\n",
+        "nltk.download('punkt')\n",
+        "\n",
+        "class RAG_Evaluator():\n",
+        "    def __init__(self, framework):\n",
+        "        self.framework = framework\n",
+        "        if self.framework == \"deepeval\":\n",
+        "            custom_model = AzureChatOpenAI(\n",
+        "                openai_api_version=\"2023-03-15-preview\",\n",
+        "                azure_deployment=\"gpt4omini\",\n",
+        "                azure_endpoint=\"https://aoi-meemank.openai.azure.com\",\n",
+        "                openai_api_key=\"772624b8d13c4d19a12e77108401695e\",\n",
+        "            )\n",
+        "            azure_openai = AzureOpenAIEvaluator(model=custom_model)\n",
+        "            self.answer_relevancy_metric = AnswerRelevancyMetric(\n",
+        "                model=azure_openai,\n",
+        "                threshold=0.7,\n",
+        "                include_reason=True\n",
+        "            )\n",
+        "            self.context_relevancy_metric = ContextualRelevancyMetric(\n",
+        "                model=azure_openai,\n",
+        "                threshold=0.7,\n",
+        "                include_reason=True\n",
+        "            )\n",
+        "            self.context_precision_metric = ContextualPrecisionMetric(\n",
+        "                threshold=0.7,\n",
+        "                model=azure_openai,\n",
+        "                include_reason=True\n",
+        "            )\n",
+        "            self.context_recall_metric = ContextualRecallMetric(\n",
+        "                threshold=0.7,\n",
+        "                model=azure_openai,\n",
+        "                include_reason=True\n",
+        "            )\n",
+        "\n",
+        "    def check_answer_relevancy(self, question, actual_output):\n",
+        "        score = \"\"\n",
+        "        reason = \"\"\n",
+        "\n",
+        "        if self.framework == \"deepeval\":\n",
+        "            test_case = LLMTestCase(\n",
+        "                input=question,\n",
+        "                actual_output=actual_output\n",
+        "            )\n",
+        "            self.answer_relevancy_metric.measure(test_case)\n",
+        "            score = self.answer_relevancy_metric.score\n",
+        "            reason = self.answer_relevancy_metric.reason\n",
+        "\n",
+        "        return score, reason\n",
+        "\n",
+        "    def check_contextual_relevancy(self, question, actual_output, retrieval_contexts):\n",
+        "        score = \"\"\n",
+        "        reason = \"\"\n",
+        "\n",
+        "        if self.framework == \"deepeval\":\n",
+        "            test_case = LLMTestCase(\n",
+        "                input=question,\n",
+        "                actual_output=actual_output,\n",
+        "                retrieval_context=retrieval_contexts\n",
+        "            )\n",
+        "            self.context_relevancy_metric.measure(test_case)\n",
+        "            score = self.context_relevancy_metric.score\n",
+        "            reason = self.context_relevancy_metric.reason\n",
+        "\n",
+        "        return score, reason\n",
+        "\n",
+        "    def check_contextual_precision(self, question, actual_output, expected_output, retrieval_contexts):\n",
+        "        score = \"\"\n",
+        "        reason = \"\"\n",
+        "\n",
+        "        if self.framework == \"deepeval\":\n",
+        "            test_case = LLMTestCase(\n",
+        "                input=question,\n",
+        "                actual_output=actual_output,\n",
+        "                expected_output=expected_output,\n",
+        "                retrieval_context=retrieval_contexts\n",
+        "            )\n",
+        "            self.context_precision_metric.measure(test_case)\n",
+        "            score = self.context_precision_metric.score\n",
+        "            reason = self.context_precision_metric.reason\n",
+        "\n",
+        "        return score, reason\n",
+        "\n",
+        "    def check_contextual_recall(self, question, actual_output, expected_output, retrieval_contexts):\n",
+        "        score = \"\"\n",
+        "        reason = \"\"\n",
+        "\n",
+        "        if self.framework == \"deepeval\":\n",
+        "            test_case = LLMTestCase(\n",
+        "                input=question,\n",
+        "                actual_output=actual_output,\n",
+        "                expected_output=expected_output,\n",
+        "                retrieval_context=retrieval_contexts\n",
+        "            )\n",
+        "            self.context_recall_metric.measure(test_case)\n",
+        "            score = self.context_recall_metric.score\n",
+        "            reason = self.context_recall_metric.reason\n",
+        "\n",
+        "        return score, reason\n",
+        "\n",
+        "    def calculate_metrics(self, ground_truth, llm_response):\n",
+        "        def calculate_rouge(reference, hypothesis):\n",
+        "            scorer = rouge_scorer.RougeScorer(['rouge1', 'rouge2', 'rougeL'], use_stemmer=True)\n",
+        "            scores = scorer.score(reference, hypothesis)\n",
+        "            return scores\n",
+        "\n",
+        "        def calculate_bertscore(reference, hypothesis):\n",
+        "            P, R, F1 = score([hypothesis], [reference], lang=\"en\", verbose=False)\n",
+        "            return {\n",
+        "                'precision': P.item(),\n",
+        "                'recall': R.item(),\n",
+        "                'f1': F1.item()\n",
+        "            }\n",
+        "\n",
+        "        rouge_scores = calculate_rouge(ground_truth, llm_response)\n",
+        "        bertscore = calculate_bertscore(ground_truth, llm_response)\n",
+        "\n",
+        "        results = {\n",
+        "            'ROUGE-1': rouge_scores['rouge1'].fmeasure,\n",
+        "            'ROUGE-2': rouge_scores['rouge2'].fmeasure,\n",
+        "            'ROUGE-L': rouge_scores['rougeL'].fmeasure,\n",
+        "            'BERTScore Precision': bertscore['precision'],\n",
+        "            'BERTScore Recall': bertscore['recall'],\n",
+        "            'BERTScore F1': bertscore['f1']\n",
+        "        }\n",
+        "\n",
+        "        return results\n",
+        "\n",
+        "    def get_evaluation(self, question, expected_response, rag_response):\n",
+        "        rag_response_str = rag_response[\"response_output\"]\n",
+        "        metrics = {}\n",
+        "        \n",
+        "        answer_relevancy_score, answer_relevancy_reason = self.check_answer_relevancy(question, rag_response_str)\n",
+        "        time.sleep(5)\n",
+        "\n",
+        "        relevant_contexts = [source_doc for source_doc in rag_response[\"source_documents\"]]\n",
+        "        contextual_relevancy_score, contextual_relevancy_reason = self.check_contextual_relevancy(question, rag_response_str, relevant_contexts)\n",
+        "        time.sleep(5)\n",
+        "\n",
+        "        if expected_response != \"\":\n",
+        "            contextual_precision_score, contextual_precision_reason = self.check_contextual_precision(question, rag_response_str, expected_response, relevant_contexts)\n",
+        "            time.sleep(5)\n",
+        "            contextual_recall_score, contextual_recall_reason = self.check_contextual_recall(question, rag_response_str, expected_response, relevant_contexts)\n",
+        "            time.sleep(5)\n",
+        "        else:\n",
+        "            contextual_precision_score, contextual_precision_reason = 0.0, \"NA\"\n",
+        "            contextual_recall_score, contextual_recall_reason = 0.0, \"NA\"\n",
+        "        \n",
+        "        additional_metrics = self.calculate_metrics(expected_response, rag_response_str)\n",
+        "\n",
+        "        metrics.update({\n",
+        "            'answer_relevancy_score': answer_relevancy_score,\n",
+        "            'answer_relevancy_reason': answer_relevancy_reason,\n",
+        "            'contextual_relevancy_score': contextual_relevancy_score,\n",
+        "            'contextual_relevancy_reason': contextual_relevancy_reason,\n",
+        "            'contextual_precision_score': contextual_precision_score,\n",
+        "            'contextual_precision_reason': contextual_precision_reason,\n",
+        "            'contextual_recall_score': contextual_recall_score,\n",
+        "            'contextual_recall_reason': contextual_recall_reason\n",
+        "        })\n",
+        "\n",
+        "        metrics.update(additional_metrics)\n",
+        "\n",
+        "        return metrics\n",
+        "\n",
+        "    def get_rag_response(self, question):\n",
+        "        response = \"\"\n",
+        "        final_dict = {}\n",
+        "        def allowSelfSignedHttps(allowed):\n",
+        "                \"\"\"Bypass the server certificate verification on the client side.\"\"\"\n",
+        "                if allowed and not os.environ.get('PYTHONHTTPSVERIFY', '') and getattr(ssl, '_create_unverified_context', None):\n",
+        "                    ssl._create_default_https_context = ssl._create_unverified_context\n",
+        "\n",
+        "        allowSelfSignedHttps(True)  # This is needed if you use self-signed certificates.\n",
+        "\n",
+        "        def send_chat_input_LLM(question):\n",
+        "            \"\"\"Send a chat input to the API and return the parsed response.\"\"\"\n",
+        "            # API request payload\n",
+        "            data = {\n",
+        "                \"chat_input\": question,\n",
+        "                \"chat_history\": []  # Modify this if you have previous chat history\n",
+        "            }\n",
+        "            \n",
+        "            # API credentials\n",
+        "            api_key = \"OzYEqfLg8ueVePHKun3UejfBMLphos4N\"  # Replace with your actual API key\n",
+        "            url = \"https://ws-meemankraft-gcmko.eastus2.inference.ml.azure.com/score\"  # Replace with the actual API URL\n",
+        "\n",
+        "            # Prepare request body and headers\n",
+        "            body = str.encode(json.dumps(data))\n",
+        "            \n",
+        "            if not api_key:\n",
+        "                raise Exception(\"A valid API key is required to invoke the endpoint.\")\n",
+        "            \n",
+        "            headers = {'Content-Type': 'application/json', 'Authorization': 'Bearer ' + api_key}\n",
+        "            req = urllib.request.Request(url, body, headers)\n",
+        "            \n",
+        "            # Initialize response structure\n",
+        "            text_docs = []\n",
+        "            final_dict = {}\n",
+        "\n",
+        "            try:\n",
+        "                # Make the API call\n",
+        "                response = urllib.request.urlopen(req)\n",
+        "                result = response.read().decode('utf-8')\n",
+        "                \n",
+        "                # Parse the JSON response\n",
+        "                result_dict = json.loads(result)\n",
+        "                chat_output = result_dict.get('chat_output', {})\n",
+        "                \n",
+        "                # Extract chat response data\n",
+        "                response_output = chat_output.get('response', 'No response found')\n",
+        "                user_question = chat_output.get('user_question', 'No question found')\n",
+        "                source_documents = chat_output.get('source_documents', [])\n",
+        "                \n",
+        "                # Collect source document texts\n",
+        "                for doc in source_documents:\n",
+        "                    text = doc.get('text', 'No text found')\n",
+        "                    text_docs.append(text)\n",
+        "                \n",
+        "                # Build the response dictionary\n",
+        "                final_dict['response_output'] = response_output\n",
+        "                final_dict['user_question'] = user_question\n",
+        "                final_dict['source_documents'] = text_docs\n",
+        "\n",
+        "                return final_dict\n",
+        "\n",
+        "            except urllib.error.HTTPError as error:\n",
+        "                print(f\"The request failed with status code: {error.code}\")\n",
+        "                print(error.info())\n",
+        "                print(error.read().decode(\"utf8\", 'ignore'))\n",
+        "                return None          \n",
+        "            \n",
+        "            return response_dict\n",
+        "        response_dictionary = send_chat_input_LLM(question)\n",
+        "        return response_dictionary"
+      ],
+      "outputs": [
+        {
+          "output_type": "stream",
+          "name": "stderr",
+          "text": "[nltk_data] Downloading package punkt to /home/azureuser/nltk_data...\n[nltk_data]   Package punkt is already up-to-date!\n"
+        }
+      ],
+      "execution_count": 192,
+      "metadata": {
+        "jupyter": {
+          "source_hidden": false,
+          "outputs_hidden": false
+        },
+        "nteract": {
+          "transient": {
+            "deleting": false
+          }
+        },
+        "gather": {
+          "logged": 1726656848736
+        }
+      }
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "# Read ground truth\n",
+        "import pandas as pd\n",
+        "import json\n",
+        "\n",
+        "# Path to your JSONL file\n",
+        "file_path = \"lab_maintenance_100_qa.jsonl\"\n",
+        "\n",
+        "# Read the JSON file as a list of dictionaries\n",
+        "with open(file_path, 'r', encoding='utf-8') as file:\n",
+        "    data = json.load(file)  # Use json.load() since it's a JSON array, not a JSONL file\n",
+        "\n",
+        "# Convert the list of dictionaries into a DataFrame\n",
+        "df = pd.DataFrame(data)\n",
+        "\n",
+        "# Display the DataFrame\n",
+        "df.head()\n",
+        "\n",
+        "df=df.head(2)"
+      ],
+      "outputs": [],
+      "execution_count": 202,
+      "metadata": {
+        "jupyter": {
+          "source_hidden": false,
+          "outputs_hidden": false
+        },
+        "nteract": {
+          "transient": {
+            "deleting": false
+          }
+        },
+        "gather": {
+          "logged": 1726657171151
+        }
+      }
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "evaluator = RAG_Evaluator(framework = \"deepeval\")\n",
+        "# Apply the function to each row in the DataFrame\n",
+        "df['LLM_response'] = df.apply(lambda row: evaluator.get_rag_response(row['question']),axis=1)\n",
+        "# # If you want to separate the response_output and source_documents into different columns\n",
+        "df['response_output_LLM'] = df['LLM_response'].apply(lambda x: x['response_output'])\n",
+        "df['source_documents_LLM'] = df['LLM_response'].apply(lambda x: x['source_documents'])\n",
+        "# Apply the function to each row in the DataFrame\n",
+        "df['deepeval_response'] = df.apply(lambda row: evaluator.get_evaluation(row['question'], row['answer'], row['LLM_response']), axis=1)\n",
+        "\n",
+        "# If you want to separate the response_output and source_documents into different columns\n",
+        "df['answer_relevancy_score'] = df['deepeval_response'].apply(lambda x: x['answer_relevancy_score'])\n",
+        "df['contextual_relevancy_score'] = df['deepeval_response'].apply(lambda x: x['contextual_relevancy_score'])\n",
+        "df['contextual_precision_score'] = df['deepeval_response'].apply(lambda x: x['contextual_precision_score'])\n",
+        "df['contextual_recall_score'] = df['deepeval_response'].apply(lambda x: x['contextual_recall_score'])\n",
+        "# df = df.drop(columns=['deepeval_response'])"
+      ],
+      "outputs": [
+        {
+          "output_type": "display_data",
+          "data": {
+            "text/plain": "✨ You're running DeepEval's latest \u001b[38;2;106;0;255mContextual Recall Metric\u001b[0m! \u001b[38;2;55;65;81m(using Custom Azure OpenAI Model, strict=False, asyn…\u001b[0m\n",
+            "text/html": "<pre style=\"white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace\">✨ You're running DeepEval's latest <span style=\"color: #6a00ff; text-decoration-color: #6a00ff\">Contextual Recall Metric</span>! <span style=\"color: #374151; text-decoration-color: #374151\">(using Custom Azure OpenAI Model, strict=False, asyn…</span>\n</pre>\n"
+          },
+          "metadata": {}
+        },
+        {
+          "output_type": "display_data",
+          "data": {
+            "text/plain": "",
+            "text/html": "<pre style=\"white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace\"></pre>\n"
+          },
+          "metadata": {}
+        },
+        {
+          "output_type": "display_data",
+          "data": {
+            "text/plain": "\n",
+            "text/html": "<pre style=\"white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace\">\n</pre>\n"
+          },
+          "metadata": {}
+        },
+        {
+          "output_type": "stream",
+          "name": "stderr",
+          "text": "Some weights of RobertaModel were not initialized from the model checkpoint at roberta-large and are newly initialized: ['roberta.pooler.dense.bias', 'roberta.pooler.dense.weight']\nYou should probably TRAIN this model on a down-stream task to be able to use it for predictions and inference.\n"
+        }
+      ],
+      "execution_count": 204,
+      "metadata": {
+        "jupyter": {
+          "source_hidden": false,
+          "outputs_hidden": false
+        },
+        "nteract": {
+          "transient": {
+            "deleting": false
+          }
+        },
+        "gather": {
+          "logged": 1726657243676
+        }
+      }
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "df['ROUGE-1'] = df['deepeval_response'].apply(lambda x: x['ROUGE-1'])\n",
+        "df['ROUGE-2'] = df['deepeval_response'].apply(lambda x: x['ROUGE-2'])\n",
+        "df['ROUGE-L'] = df['deepeval_response'].apply(lambda x: x['ROUGE-L'])\n",
+        "df['BERTScore_Precision'] = df['deepeval_response'].apply(lambda x: x['BERTScore Precision'])\n",
+        "df['BERTScore_Recall'] = df['deepeval_response'].apply(lambda x: x['BERTScore Recall'])\n",
+        "df['BERTScore_F1'] = df['deepeval_response'].apply(lambda x: x['BERTScore F1'])\n",
+        "# df = df.drop(columns=['deepeval_response'])"
+      ],
+      "outputs": [],
+      "execution_count": 205,
+      "metadata": {
+        "jupyter": {
+          "source_hidden": false,
+          "outputs_hidden": false
+        },
+        "nteract": {
+          "transient": {
+            "deleting": false
+          }
+        },
+        "gather": {
+          "logged": 1726657244610
+        }
+      }
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "df['source_documents_LLM'][0]"
+      ],
+      "outputs": [
+        {
+          "output_type": "execute_result",
+          "execution_count": 208,
+          "data": {
+            "text/plain": "['Title: data.pdfMAINTENANCE MANUAL FOR LABORATORY EQUIPMENT\\n1The microplate reader also known as “Photometric \\nmicro-plate reader or ELISA reader” is a specialized spectrophotometer designed to read results of the ELISA test, a technique used to determine the presence of antibodies or specifi  c antigens in samples. The technique \\nis based on the detection of an antigen or antibodies captured on a solid surface using direct or secondary, labelled antibodies, producing a reaction whose product can be read by the spectrophotometer. The word ELISA is the acronym for “Enzyme-Linked Immunosorbent Assay” . This chapter covers the use of microplate readers for ELISA testing. For additional information on the instrument principles of operation and maintenance, consult Chapter 11 discussing the spectrophotometer.\\nPHOTOGRAPH OF MICROPLATE READER\\nPURPOSE OF THE MICROPLATE READER\\nThe microplate reader is used for reading the results of ELISA \\ntests. This technique has a direct application in immunology and serology. Among other applications it confi  rms the \\npresence of antibodies or antigens of an infectious agent in an organism, antibodies from a vaccine or auto-antibodies, for example in rheumatoid arthritis.OPERATION PRINCIPLES\\nThe microplate reader is a specialized spectrophotometer. Unlike the c onventional spectrophotometer which facilitates \\nreadings on a wide range of wavelengths, the microplate reader has filters or diffraction gratings that limit the wavelength range to that used in ELISA, generally between 400 to 750 nm (nanometres). Some readers operate in the ultraviolet range and carry out analyses between 340 to 700 nm. The optical system exploited by many manufacturers uses optic fi  bres to supply light to the microplate wells \\ncontaining the samples. The light beam, passing through the sample has a diameter ranging between 1 to 3 mm. A detection system detects the light coming from the sample, amplifi  es the signal and determines the sample’s \\nabsorbance. A reading system converts it into data allowing the test result interpretation. Some microplate readers use double beam light systems.\\nTest samples are located in specially designed plates with \\na specifi  c number of wells where the procedure or test is \\ncarried out. Plates of 8 columns by 12 rows with a total of 96 wells are common. There are also plates with a greater number of wells. For specialized applications, the current trend is to increase the number of wells (384-well plates) to reduce the amount of reagents and samples used and a greater throughput. The location of the optical sensors of the microplate reader varies depending on the manufacturers: these can be located above the sample plate, or directly underneath the plate’s wells.\\nNowadays microplate readers have controls regulated by \\nmicroprocessors; connection interfaces to information systems; quality and process control programs, which by means of a computer, allow complete test automation.Chapter 1\\nMicroplate Reader\\nGMDN Code 37036\\nECRI Code 16-979\\nDenomination Photometric micro-plate reader\\nPhoto courtesy of BioRad Laboratories ',\n 'Title: data.pdfMAINTENANCE MANUAL FOR LABORATORY EQUIPMENT\\n3INSTALLATION REQUIREMENTS\\nIn order for the microplate reader to operate correctly, the \\nfollowing points need to be respected:  \\n1. A clean, dust free environment. 2. A stable work table away from equipment that vibrates \\n(centrifuges, agitators). It should be of a suitable size so that there is working space at the side of the microplate reader. The required complementary equipment for conducting the technique described above is: washer, incubator, dispenser and computer with its peripheral attachments. \\n3. An electrical supply source, which complies with the \\ncountry’s norms and standards. In the countries of the Americas for example, 110 V and 60 Hertz frequencies are generally used, whereas other regions of the World use 220-240V, 50/60HZ.\\nCalibration of the microplate reader \\nThe calibration of a microplate reader is a specialized process which must be ex ecuted by a technician or trained engineer \\nfollowing the instructions provided by each manufacturer. In order to do the calibration, it is necessary to have a set of grey fi  lters mounted on a plate of equal geometric size \\nto those used in the analyses. Manufacturers provide these calibration plates for any wavelength the equipment uses. \\nCalibration plates are equipped with at least three pre-\\nestablished optic density values within the measurement ranges; low, medium, and high value. In order to perform the calibration, follow this process:1. Place the calibration plate on the equipment. 2. Carry out a complete reading with the calibration plate. \\nVerify if there are diff  erences in the readings obtained \\nfrom well to well. If this is the case, invert the plate (180°) and repeat the reading to rule out that diff  erences are \\nattributed to the plate itself. In general, it is accepted that the instrument does not need further calibration if the plate results are as expected at two wavelengths. \\n3. Verify if the reader requires calibration. If so, proceed \\nwith the calibration following the routine outlined by the manufacturer, verifying that the reading’s linearity is maintained as rigorously as possible. \\n4. If the instrument does not have a calibration plate, verify \\nit by placing a coloured solution in the wells of a plate and immediately carry out a complete reading. Then invert the plate 180° and read the plate again. If both readings display identical, average values in each row, the reader is calibrated. 5. Verify that the reader is calibrated, column by column. \\nPlace a clean, empty plate and carry out a reading. If there is no diff  erence between each of the average \\nreading of the fi  rst to the last column, it can be assumed \\nthat the reader is calibrated.\\nROUTINE MAINTENANCE \\nMaintenance described next focuses exclusively on the micr oplate reader. The maintenance of the microplate \\nwasher is described in Chapter 2.\\nBasic maintenance \\nFrequency: Daily1. Review that optical sensors of each channel are clean. \\nIf dirt is detected, clean the surface of the windows of the light emitters and the sensors with a small brush.\\n2. Confi  rm that the lighting system is clean.\\n3. Verify that the reader’s calibration is adequate. When \\nthe daily operations begin, let the reader warm up for 30 minutes. Next, do a blank reading and then read a full plate of substrate. The readings must be identical. If not, invert the plate and repeat the reading in order to determine if the deviation originated in the plate or the reader.\\n4. Examine the automatic drawer sliding system. It must \\nbe smooth and constant.\\nPreventive maintenance\\nFrequency: Quarterly1. Verify the stability of the lamp. Use the calibration plate, \\nconducting readings with intervals of 30 minutes with the same plate. Compare readings. There must be no diff erences. \\n2. Clean the detectors’ optical systems and the lighting \\nsystems. \\n3. Clean the plate drawer. 4. Verify the alignment of each well with the light emission \\nand detection systems.',\n 'Title: data.pdfCHAPTER 1  MICROPLATE READER\\n2Equipment required for ELISA testing\\nIn order to perform the ELISA technique, the following \\nequipment is r equired:  \\n1.  Microplate reader. 2. Microplate washer (Chapter 2). 3. Liquid dispensing system (multi-channel pipettes may \\nbe used). \\n4. Incubator to incubate the plates. \\nFigure 1 illustrates how this equipment is interrelated.\\nMechanical phases of the ELISA technique \\nUsing the equipment\\nWhen an ELISA t est is conducted, it typically follows these \\nsteps:  1. A fi  rst washing of the plate may be done using the \\nmicroplate washer. \\n2. Using a liquid dispenser or the multi-channel pipettes, \\nwells are fi  lled with the solution prepared to be used in \\nthe test. \\n3. The plate is placed in the incubator where at a controlled \\ntemperature, a series of reactions take place. \\nStages 1, 2 and 3 can be repeated several times depending \\non the test, until the reagents added have completed their reactions.\\nFinally, when all the incubation steps have been completed, \\nthe plate is transferred to the microplate reader. The reading of the plate is done and a diagnosis can be deduced.Biochemical phases of the ELISA technique1\\nThe ELISA technique from a biochemical point of view:1. The plate wells are coated with antibodies or antigens. 2. Samples, controls and standards are added to the wells \\nand incubated at temperatures ranging between room temperature and 37 °C for a determined period of time, according to the test’s characteristics. During the incubation, the sample’s antigen binds to the antibody coated to the plate; or the antibody in the sample binds to the antigen coated on the plate, according to their presence and quantity in the sample analyzed.\\n3. After incubation, the unbound antigen or antibodies are \\nwashed and removed from the plate by the microplate washer using an appropriate washing buff  er.\\n4. Next, a secondary antibody, called the conjugate, is \\nadded. This harbours an enzyme which will react with a substrate to produce a change of colour at a later step.\\n5. Then begins a second period of incubation during \\nwhich this conjugate will bind to the antigen-antibody complex in the wells.\\n6. After the incubation, a new washing cycle is done to \\nremove unbound conjugate from the wells.\\n7.  A substrate is added. The enzyme reacts with the \\nsubstrate and causes the solution to change in colour. This will indicate how much antigen-antibody complex is present at the end of the test. \\n8. Once the incubation time is completed, a reagent \\nis added to stop the enzyme-substrate reaction and to prevent further changes in colour. This reagent is generally a diluted acid. \\n9. Finally, the plate in is read by the microplate. The \\nresulting values are used to determine the specific amounts or the presence of antigens or antibodies in the sample. \\nNote:  Some of the wells are used for \\nstandards and controls. Standards allow the cut-off   points to be defi  ned. The \\nstandards and controls are of known quantities and are used for measuring the success of the test, evaluating data against known concentrations for each control. The process described above is common, although there are many ELISA tests with test-specifi  c variants.\\n1 More detailed explanations must be consulted in \\nspecialized literature.\\n  \\n \\n Dispensing\\nSystemELISA Plate \\nWasher\\nIncubator\\nELISA\\nReader\\nComputerFigure 1.  Equipment used in ELISA tests']"
+          },
+          "metadata": {}
+        }
+      ],
+      "execution_count": 208,
+      "metadata": {
+        "jupyter": {
+          "source_hidden": false,
+          "outputs_hidden": false
+        },
+        "nteract": {
+          "transient": {
+            "deleting": false
+          }
+        },
+        "gather": {
+          "logged": 1726663726081
+        }
+      }
+    },
+    {
+      "cell_type": "code",
+      "source": [],
+      "outputs": [],
+      "execution_count": null,
+      "metadata": {
+        "jupyter": {
+          "source_hidden": false,
+          "outputs_hidden": false
+        },
+        "nteract": {
+          "transient": {
+            "deleting": false
+          }
+        }
+      }
+    }
+  ],
+  "metadata": {
+    "kernelspec": {
+      "name": "python38-azureml",
+      "language": "python",
+      "display_name": "Python 3.8 - AzureML"
+    },
+    "language_info": {
+      "name": "python",
+      "version": "3.9.19",
+      "mimetype": "text/x-python",
+      "codemirror_mode": {
+        "name": "ipython",
+        "version": 3
+      },
+      "pygments_lexer": "ipython3",
+      "nbconvert_exporter": "python",
+      "file_extension": ".py"
+    },
+    "kernel_info": {
+      "name": "python38-azureml"
+    },
+    "microsoft": {
+      "ms_spell_check": {
+        "ms_spell_check_language": "en"
+      },
+      "host": {
+        "AzureML": {
+          "notebookHasBeenCompleted": true
+        }
+      }
+    },
+    "nteract": {
+      "version": "nteract-front-end@1.0.0"
+    },
+    "widgets": {
+      "application/vnd.jupyter.widget-state+json": {
+        "version_major": 2,
+        "version_minor": 0,
+        "state": {
+          "2b6cf70d553f44939f3c6ae1855d37b0": {
+            "model_name": "FloatProgressModel",
+            "model_module": "@jupyter-widgets/controls",
+            "model_module_version": "1.5.0",
+            "state": {
+              "_view_module_version": "1.5.0",
+              "description_tooltip": null,
+              "_model_name": "FloatProgressModel",
+              "_model_module": "@jupyter-widgets/controls",
+              "tooltip": null,
+              "max": 1,
+              "description_allow_html": false,
+              "bar_style": "success",
+              "_view_name": "ProgressView",
+              "tabbable": null,
+              "_view_module": "@jupyter-widgets/controls",
+              "_dom_classes": [],
+              "layout": "IPY_MODEL_2d778339b4ef4007904b2022aceb1434",
+              "orientation": "horizontal",
+              "value": 1,
+              "style": "IPY_MODEL_80c6c4377d834442b1477fc9754f1b55",
+              "min": 0,
+              "_view_count": null,
+              "_model_module_version": "1.5.0",
+              "description": ""
+            }
+          },
+          "b9b91b22f462418c92e7d11a9090a0d0": {
+            "model_name": "HTMLModel",
+            "model_module": "@jupyter-widgets/controls",
+            "model_module_version": "1.5.0",
+            "state": {
+              "_view_module_version": "1.5.0",
+              "description_tooltip": null,
+              "_model_name": "HTMLModel",
+              "_model_module": "@jupyter-widgets/controls",
+              "tooltip": null,
+              "description_allow_html": false,
+              "_view_name": "HTMLView",
+              "tabbable": null,
+              "_view_module": "@jupyter-widgets/controls",
+              "_dom_classes": [],
+              "layout": "IPY_MODEL_fb03a5b285d343e3a97afabcba3a1ff7",
+              "value": "Generating train split: ",
+              "style": "IPY_MODEL_dc28b7e3ffdf44aaa902b30dbc364039",
+              "placeholder": "​",
+              "_view_count": null,
+              "_model_module_version": "1.5.0",
+              "disabled": false,
+              "description": ""
+            }
+          },
+          "7e55dc1023ed4117b7cfb0aacb5169e8": {
+            "model_name": "LayoutModel",
+            "model_module": "@jupyter-widgets/base",
+            "model_module_version": "1.2.0",
+            "state": {
+              "_view_module_version": "1.2.0",
+              "_model_name": "LayoutModel",
+              "grid_row": null,
+              "_model_module": "@jupyter-widgets/base",
+              "overflow": null,
+              "max_height": null,
+              "display": null,
+              "border_top": null,
+              "grid_auto_flow": null,
+              "grid_template_rows": null,
+              "align_self": null,
+              "grid_auto_columns": null,
+              "width": null,
+              "grid_area": null,
+              "align_items": null,
+              "_view_name": "LayoutView",
+              "left": null,
+              "height": null,
+              "_view_module": "@jupyter-widgets/base",
+              "border_right": null,
+              "object_position": null,
+              "justify_content": null,
+              "bottom": null,
+              "max_width": null,
+              "border": null,
+              "margin": null,
+              "order": null,
+              "grid_column": null,
+              "grid_auto_rows": null,
+              "padding": null,
+              "grid_template_columns": null,
+              "justify_items": null,
+              "object_fit": null,
+              "visibility": null,
+              "_view_count": null,
+              "flex_flow": null,
+              "min_height": null,
+              "top": null,
+              "min_width": null,
+              "flex": null,
+              "border_left": null,
+              "_model_module_version": "1.2.0",
+              "grid_template_areas": null,
+              "overflow_x": null,
+              "right": null,
+              "overflow_y": null,
+              "grid_gap": null,
+              "border_bottom": null,
+              "align_content": null
+            }
+          },
+          "ee20ef7cadc14ecaa8d77c39feff6415": {
+            "model_name": "LayoutModel",
+            "model_module": "@jupyter-widgets/base",
+            "model_module_version": "1.2.0",
+            "state": {
+              "_view_module_version": "1.2.0",
+              "_model_name": "LayoutModel",
+              "grid_row": null,
+              "_model_module": "@jupyter-widgets/base",
+              "overflow": null,
+              "max_height": null,
+              "display": null,
+              "border_top": null,
+              "grid_auto_flow": null,
+              "grid_template_rows": null,
+              "align_self": null,
+              "grid_auto_columns": null,
+              "width": null,
+              "grid_area": null,
+              "align_items": null,
+              "_view_name": "LayoutView",
+              "left": null,
+              "height": null,
+              "_view_module": "@jupyter-widgets/base",
+              "border_right": null,
+              "object_position": null,
+              "justify_content": null,
+              "bottom": null,
+              "max_width": null,
+              "border": null,
+              "margin": null,
+              "order": null,
+              "grid_column": null,
+              "grid_auto_rows": null,
+              "padding": null,
+              "grid_template_columns": null,
+              "justify_items": null,
+              "object_fit": null,
+              "visibility": null,
+              "_view_count": null,
+              "flex_flow": null,
+              "min_height": null,
+              "top": null,
+              "min_width": null,
+              "flex": null,
+              "border_left": null,
+              "_model_module_version": "1.2.0",
+              "grid_template_areas": null,
+              "overflow_x": null,
+              "right": null,
+              "overflow_y": null,
+              "grid_gap": null,
+              "border_bottom": null,
+              "align_content": null
+            }
+          },
+          "4d1e1212643b4ad0b2ae9ef65e42f6f5": {
+            "model_name": "HTMLModel",
+            "model_module": "@jupyter-widgets/controls",
+            "model_module_version": "1.5.0",
+            "state": {
+              "_view_module_version": "1.5.0",
+              "description_tooltip": null,
+              "_model_name": "HTMLModel",
+              "_model_module": "@jupyter-widgets/controls",
+              "tooltip": null,
+              "description_allow_html": false,
+              "_view_name": "HTMLView",
+              "tabbable": null,
+              "_view_module": "@jupyter-widgets/controls",
+              "_dom_classes": [],
+              "layout": "IPY_MODEL_7e55dc1023ed4117b7cfb0aacb5169e8",
+              "value": " 85/0 [00:00&lt;00:00, 547.27 examples/s]",
+              "style": "IPY_MODEL_4579b400de2942caa4a6d3fe0801f1f0",
+              "placeholder": "​",
+              "_view_count": null,
+              "_model_module_version": "1.5.0",
+              "disabled": false,
+              "description": ""
+            }
+          },
+          "4579b400de2942caa4a6d3fe0801f1f0": {
+            "model_name": "DescriptionStyleModel",
+            "model_module": "@jupyter-widgets/controls",
+            "model_module_version": "1.5.0",
+            "state": {
+              "_model_module": "@jupyter-widgets/controls",
+              "_model_name": "DescriptionStyleModel",
+              "_model_module_version": "1.5.0",
+              "_view_module": "@jupyter-widgets/base",
+              "_view_name": "StyleView",
+              "_view_module_version": "1.2.0",
+              "_view_count": null,
+              "description_width": ""
+            }
+          },
+          "fb03a5b285d343e3a97afabcba3a1ff7": {
+            "model_name": "LayoutModel",
+            "model_module": "@jupyter-widgets/base",
+            "model_module_version": "1.2.0",
+            "state": {
+              "_view_module_version": "1.2.0",
+              "_model_name": "LayoutModel",
+              "grid_row": null,
+              "_model_module": "@jupyter-widgets/base",
+              "overflow": null,
+              "max_height": null,
+              "display": null,
+              "border_top": null,
+              "grid_auto_flow": null,
+              "grid_template_rows": null,
+              "align_self": null,
+              "grid_auto_columns": null,
+              "width": null,
+              "grid_area": null,
+              "align_items": null,
+              "_view_name": "LayoutView",
+              "left": null,
+              "height": null,
+              "_view_module": "@jupyter-widgets/base",
+              "border_right": null,
+              "object_position": null,
+              "justify_content": null,
+              "bottom": null,
+              "max_width": null,
+              "border": null,
+              "margin": null,
+              "order": null,
+              "grid_column": null,
+              "grid_auto_rows": null,
+              "padding": null,
+              "grid_template_columns": null,
+              "justify_items": null,
+              "object_fit": null,
+              "visibility": null,
+              "_view_count": null,
+              "flex_flow": null,
+              "min_height": null,
+              "top": null,
+              "min_width": null,
+              "flex": null,
+              "border_left": null,
+              "_model_module_version": "1.2.0",
+              "grid_template_areas": null,
+              "overflow_x": null,
+              "right": null,
+              "overflow_y": null,
+              "grid_gap": null,
+              "border_bottom": null,
+              "align_content": null
+            }
+          },
+          "2d778339b4ef4007904b2022aceb1434": {
+            "model_name": "LayoutModel",
+            "model_module": "@jupyter-widgets/base",
+            "model_module_version": "1.2.0",
+            "state": {
+              "_view_module_version": "1.2.0",
+              "_model_name": "LayoutModel",
+              "grid_row": null,
+              "_model_module": "@jupyter-widgets/base",
+              "overflow": null,
+              "max_height": null,
+              "display": null,
+              "border_top": null,
+              "grid_auto_flow": null,
+              "grid_template_rows": null,
+              "align_self": null,
+              "grid_auto_columns": null,
+              "width": "20px",
+              "grid_area": null,
+              "align_items": null,
+              "_view_name": "LayoutView",
+              "left": null,
+              "height": null,
+              "_view_module": "@jupyter-widgets/base",
+              "border_right": null,
+              "object_position": null,
+              "justify_content": null,
+              "bottom": null,
+              "max_width": null,
+              "border": null,
+              "margin": null,
+              "order": null,
+              "grid_column": null,
+              "grid_auto_rows": null,
+              "padding": null,
+              "grid_template_columns": null,
+              "justify_items": null,
+              "object_fit": null,
+              "visibility": null,
+              "_view_count": null,
+              "flex_flow": null,
+              "min_height": null,
+              "top": null,
+              "min_width": null,
+              "flex": null,
+              "border_left": null,
+              "_model_module_version": "1.2.0",
+              "grid_template_areas": null,
+              "overflow_x": null,
+              "right": null,
+              "overflow_y": null,
+              "grid_gap": null,
+              "border_bottom": null,
+              "align_content": null
+            }
+          },
+          "dc28b7e3ffdf44aaa902b30dbc364039": {
+            "model_name": "DescriptionStyleModel",
+            "model_module": "@jupyter-widgets/controls",
+            "model_module_version": "1.5.0",
+            "state": {
+              "_model_module": "@jupyter-widgets/controls",
+              "_model_name": "DescriptionStyleModel",
+              "_model_module_version": "1.5.0",
+              "_view_module": "@jupyter-widgets/base",
+              "_view_name": "StyleView",
+              "_view_module_version": "1.2.0",
+              "_view_count": null,
+              "description_width": ""
+            }
+          },
+          "ff3a32f2578a4ed2a631393882858828": {
+            "model_name": "HBoxModel",
+            "model_module": "@jupyter-widgets/controls",
+            "model_module_version": "1.5.0",
+            "state": {
+              "_view_module_version": "1.5.0",
+              "_model_name": "HBoxModel",
+              "_model_module": "@jupyter-widgets/controls",
+              "tooltip": null,
+              "_view_name": "HBoxView",
+              "tabbable": null,
+              "_view_module": "@jupyter-widgets/controls",
+              "_dom_classes": [],
+              "layout": "IPY_MODEL_ee20ef7cadc14ecaa8d77c39feff6415",
+              "_view_count": null,
+              "_model_module_version": "1.5.0",
+              "box_style": "",
+              "children": [
+                "IPY_MODEL_b9b91b22f462418c92e7d11a9090a0d0",
+                "IPY_MODEL_2b6cf70d553f44939f3c6ae1855d37b0",
+                "IPY_MODEL_4d1e1212643b4ad0b2ae9ef65e42f6f5"
+              ]
+            }
+          },
+          "80c6c4377d834442b1477fc9754f1b55": {
+            "model_name": "ProgressStyleModel",
+            "model_module": "@jupyter-widgets/controls",
+            "model_module_version": "1.5.0",
+            "state": {
+              "_view_module_version": "1.2.0",
+              "_model_name": "ProgressStyleModel",
+              "_model_module": "@jupyter-widgets/controls",
+              "description_width": "",
+              "_view_name": "StyleView",
+              "_view_module": "@jupyter-widgets/base",
+              "_view_count": null,
+              "bar_color": null,
+              "_model_module_version": "1.5.0"
+            }
+          }
+        }
+      }
+    }
+  },
+  "nbformat": 4,
+  "nbformat_minor": 2
+}
