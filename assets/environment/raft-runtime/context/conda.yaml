@@ -1,0 +1,31 @@
+name: raft-runtime
+channels:
+  - conda-forge
+dependencies:
+  - python=3.9
+  - pip=23.3
+  - pip:
+    - datasets==2.16.1
+    - openai==1.10.0
+    - PyPDF2==3.0.1
+    - transformers==4.38.0
+    - langchain-experimental
+    - langchain-openai
+    - python-dotenv==1.0.1
+    - pyyaml==6.0.1
+    - coloredlogs==15.0.1
+    - mdc==1.2.1
+    - Wand>=0.6.8
+    - strictyaml
+    - numpy>=1.26.0
+    - matplotlib>=3.9.0
+    - strenum>=0.4.15
+    # Azure ML Infra
+    - mlflow>=2.15.0
+    - azureml-core~=1.57.0
+    - azureml-mlflow~=1.57.0
+    - azure-cli>=2.60
+    - azure-ai-ml==1.20.0
+    - azure-identity==1.17.1
+    - azure-mgmt-resource==23.1.1
+    - msrestazure>=0.6.0

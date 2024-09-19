@@ -1,0 +1,107 @@
+inputs:
+  chat_history:
+    type: list
+    default:
+    - inputs:
+        chat_input: Hi
+      outputs:
+        chat_output: Hello! How can I assist you today?
+    - inputs:
+        chat_input: What is Azure compute instance?
+      outputs:
+        chat_output: An Azure Machine Learning compute instance is a fully managed cloud-based workstation for data scientists. It provides a pre-configured and managed development environment in the cloud for machine learning. Compute instances can also be used as a compute target for training and inferencing for development and testing purposes. They have a job queue, run jobs securely in a virtual network environment, and can run multiple small jobs in parallel. Additionally, compute instances support single-node multi-GPU distributed training jobs.
+    is_chat_input: false
+    is_chat_history: true
+  chat_input:
+    type: string
+    default: How can I create one using azureml sdk V2?
+    is_chat_input: true
+outputs:
+  chat_output:
+    type: string
+    reference: ${get_final_output.output}
+    evaluation_only: false
+    is_chat_output: true
+nodes:
+- name: modify_query_with_history
+  type: llm
+  source:
+    type: code
+    path: modify_query_with_history.jinja2
+  inputs:
+    deployment_name: "gpt4omini"
+    temperature: 0
+    top_p: 1
+    max_tokens: 1000
+    response_format:
+      type: text
+    presence_penalty: 0
+    frequency_penalty: 0
+    chat_history: "${inputs.chat_history}"
+    chat_input: "${inputs.chat_input}"
+  api: chat
+  provider: AzureOpenAI
+  connection: aoi
+  module: promptflow.tools.aoai
+  aggregation: false
+- name: lookup
+  type: python
+  source:
+    type: package
+    tool: promptflow_vectordb.tool.common_index_lookup.search
+  inputs:
+    mlindex_content: "embeddings:\n  api_base: https://aoi-meemank.openai.azure.com/\n  api_type: azure\n  api_version: '2024-02-01'\n  batch_size: '1'\n  connection:\n    id: /subscriptions/62a476f9-9f3d-443f-991f-c2970691f3c9/resourceGroups/rg-meemankgpt/providers/Microsoft.MachineLearningServices/workspaces/ws-meemankraft/connections/aoi\n  connection_type: workspace_connection\n  deployment: embedding\n  dimension: 1536\n  kind: open_ai\n  model: text-embedding-ada-002\n  schema_version: '2'\nindex:\n  api_version: '2023-11-01'\n  connection:\n    id: /subscriptions/62a476f9-9f3d-443f-991f-c2970691f3c9/resourceGroups/rg-meemankgpt/providers/Microsoft.MachineLearningServices/workspaces/ws-meemankraft/connections/ai_search\n  connection_type: workspace_connection\n  endpoint: https://ai-mmk.search.windows.net\n  engine: azure-sdk\n  field_mapping:\n    content: content\n    embedding: contentVector\n    metadata: title\n  index: plum-camel-m8rln98tqx\n  kind: acs\n  semantic_configuration_name: azureml-default\n"
+    queries: "${modify_query_with_history.output}"
+    query_type: "Hybrid (vector + keyword)"
+    top_k: 3
+  aggregation: false
+- name: generate_prompt_context
+  type: python
+  source:
+    type: code
+    path: generate_prompt_context.py
+  inputs:
+    search_result: "${lookup.output}"
+  aggregation: false
+- name: chat_with_context
+  type: llm
+  source:
+    type: code
+    path: chat_with_context.jinja2
+  inputs:
+    deployment_name: "gpt4omini"
+    temperature: 0
+    top_p: 1
+    max_tokens: 1000
+    response_format:
+      type: text
+    presence_penalty: 0
+    frequency_penalty: 0
+    prompt_text: "${Prompt_variants.output}"
+  api: chat
+  provider: AzureOpenAI
+  connection: aoi
+  module: promptflow.tools.aoai
+  aggregation: false
+- name: get_final_output
+  type: python
+  source:
+    type: code
+    path: get_final_output.py
+  inputs:
+    rag_response: "${chat_with_context.output}"
+    source_documents: "${lookup.output}"
+    user_question: "${inputs.chat_input}"
+  aggregation: false
+- name: Prompt_variants
+  type: prompt
+  source:
+    type: code
+    path: Prompt_variants.jinja2
+  inputs:
+    contexts: "${generate_prompt_context.output}"
+    chat_history: "${inputs.chat_history}"
+    chat_input: "${inputs.chat_input}"
+  aggregation: false
+environment:
+  python_requirements_txt: requirements.txt
