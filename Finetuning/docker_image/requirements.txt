@@ -1,0 +1,13 @@
+numpy
+transformers
+peft
+accelerate
+bitsandbytes
+flash-attn
+trl
+auto-gptq
+einops
+openpyxl
+mlflow
+optimum
+azureml-sdk
