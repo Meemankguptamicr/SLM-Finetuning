@@ -83,7 +83,7 @@ inputs:
 jobs:
   raft_prepare_data:
     type: command
-    component: azureml:raft_data_prep:0.0.3
+    component: azureml:raft_data_prep:0.0.1
     compute: '${{parent.inputs.compute}}'
     resources:
       instance_type: '${{parent.inputs.instance_type}}'

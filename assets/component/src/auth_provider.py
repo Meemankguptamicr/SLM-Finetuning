@@ -9,20 +9,10 @@ import logging
 import requests
 
 from abc import abstractmethod
-from datetime import datetime, timezone
-
-from azure.core.credentials import AccessToken
-from azure.identity import (
-    CredentialUnavailableError,
-    DefaultAzureCredential,
-    ManagedIdentityCredential,
-)
 from azureml.core import Run, Workspace
+from raft.logconf import log_setup
 from requests.adapters import HTTPAdapter
 from urllib3 import Retry
-
-from logconf import log_setup
-from constants import EndpointType
 
 
 log_setup()
@@ -38,101 +28,6 @@ class AuthProvider:
         pass
 
 
-class IdentityAuthProvider(AuthProvider):
-    """Identity auth provider."""
-
-    SCORE_MACHINE_LEARNING_WORKSPACE = "https://ml.azure.com/.default"
-
-    def __init__(
-            self,
-            use_user_identity: bool,
-            managed_identity_client_id: str = None):
-        """Initialize IdentityAuthProvider."""
-        # The identity used to score an AOAI deployment must have
-        # the role "Cognitive Services User" on the AOAI resource.
-        # The role "Contributor" is not sufficient.
-
-        if managed_identity_client_id and managed_identity_client_id != "DEFAULT_IDENTITY_CLIENT_ID":
-            logger.info(f"Using managed identity credential with client id {managed_identity_client_id}")
-            self.__credential = ManagedIdentityCredential(client_id=managed_identity_client_id)
-        else:
-            client_id = os.environ.get('DEFAULT_IDENTITY_CLIENT_ID', None)
-
-            if client_id:
-                logger.info(f"Using managed identity credential with default client id {client_id}")
-                self.__credential = ManagedIdentityCredential(client_id=client_id)
-            else:
-                logger.info("Using default azure credential.")
-                self.__credential = DefaultAzureCredential()
-
-        self.__access_token: AccessToken = None
-
-    def get_auth_headers(self) -> dict:
-        """Get auth headers."""
-        return {
-            'Authorization': 'Bearer ' + self.__get_access_token(),
-        }
-
-    def __get_access_token(self) -> AccessToken:
-        # If there's a token that isn't expired, return that
-        if not self.__is_token_expired():
-            return self.__access_token.token
-
-        try:
-            logger.info("Attempting to get token from MSI")
-            self.__access_token = self.__credential.get_token(IdentityAuthProvider.SCORE_MACHINE_LEARNING_WORKSPACE)
-        except CredentialUnavailableError:
-            logger.info("Failed to get token from MSI")
-
-        return self.__access_token.token
-
-    def __is_token_expired(self) -> bool:
-        return not self.__access_token or \
-            self.__access_token.expires_on <= datetime.now(timezone.utc).timestamp() + (5 * 60)
-
-
-class MissingApiKeyNameException(Exception):
-    """Missing API key name exception."""
-
-    def __init__(self):
-        """Init function."""
-        pass
-
-    def __str__(self):
-        """Str function."""
-        return ("'api_key_name' cannot be empty when using the authentication_type 'api_key'. "
-                "Please set 'api_key_name' to the name of the key vault secret that contains the API key "
-                "of the scoring_url. The secret must be placed in the key vault that is linked to the "
-                "AzureML workspace in which the batch scoring job runs.")
-
-
-class ApiKeyAuthProvider(AuthProvider):
-    """Api key auth provider."""
-
-    def __init__(
-            self,
-            api_key_name) -> None:
-        """Init function."""
-        if api_key_name is None:
-            ex = MissingApiKeyNameException()
-            logger.error(str(ex))
-            raise ex
-
-        self.__api_key_name = api_key_name
-        self.__api_key = self.__get_api_key()
-
-    def get_auth_headers(self) -> dict:
-        """Get auth headers."""
-        return {
-            'api-key': self.__api_key,
-        }
-
-    def __get_api_key(self) -> str:
-        run = Run.get_context()
-
-        return run.get_secret(self.__api_key_name)
-
-
 class WorkspaceConnectionAuthProvider(AuthProvider):
     """Workspace connection auth provider."""
 
@@ -143,39 +38,22 @@ class WorkspaceConnectionAuthProvider(AuthProvider):
         self._endpoint_type = endpoint_type
 
     @property
-    def current_workspace(self):
+    def current_workspace(self) -> Workspace:
         """Get the current workspace."""
         if self._current_workspace is None:
-            # self._current_workspace = Workspace.from_config()
-            self._current_workspace = Run.get_context().experiment.workspace
+            self._current_workspace = Workspace.from_config()
+            # self._current_workspace = Run.get_context().experiment.workspace
         return self._current_workspace
 
     def get_auth_headers(self) -> dict:
         """Get the auth headers."""
         resp = self._get_workspace_connection_by_name()
-        logger.info(f"get_auth_headers => {resp}")
-
-        # Serverless OSS
-        # 2024-09-19 14:29:06  INFO [    ] raft get_auth_headers => {'tags': None, 'location': None, 'id': '/subscriptions/75703df0-38f9-4e2e-8328-45f6fc810286/resourceGroups/rg-sasumai/providers/Microsoft.MachineLearningServices/workspaces/sasum-westus3-ws/connections/azureml-meta-meta-llama-3-1-405B', 'name': 'azureml-meta-meta-llama-3-1-405B', 'type': 'Microsoft.MachineLearningServices/workspaces/connections', 'properties': {'authType': 'ApiKey', 'credentials': {'key': 'SLUV5fFHHZjTfYobrtP2eUvUw1u5dSwa'}, 'group': 'AzureAI', 'category': 'Serverless', 'expiryTime': None, 'target': 'https://azureml-meta-meta-llama-3-1-405B.westus3.models.ai.azure.com/', 'createdByWorkspaceArmId': '/subscriptions/75703df0-38f9-4e2e-8328-45f6fc810286/resourceGroups/rg-sasumai/providers/Microsoft.MachineLearningServices/workspaces/sasum-westus3-ws', 'useWorkspaceManagedIdentity': False, 'isSharedToAll': False, 'sharedUserList': [], 'peRequirement': 'NotRequired', 'peStatus': 'NotApplicable', 'error': None, 'metadata': {'model_name': 'Meta-Llama-3-405B-Instruct', 'model_type': 'chat-completion', 'model_provider_name': 'Meta', 'served_model_name': 'Meta-Llama-3-405B-Instruct', 'served_model_type': 'chat-completion'}}, 'systemData': {'createdAt': '2024-09-18T16:42:04.0751366Z', 'createdBy': 'ayushmishra@microsoft.com', 'createdByType': 'User', 'lastModifiedAt': '2024-09-18T16:42:04.0751366Z', 'lastModifiedBy': 'ayushmishra@microsoft.com', 'lastModifiedByType': 'User'}}
-
-
-        # AOAI
-        # 2024-09-19 14:32:08  INFO [    ] raft get_auth_headers => {'tags': None, 'location': None, 'id': '/subscriptions/75703df0-38f9-4e2e-8328-45f6fc810286/resourceGroups/rg-sasumai/providers/Microsoft.MachineLearningServices/workspaces/sasum-westus3-ws/connections/ai-sasumai920059435573_aoai', 'name': 'ai-sasumai920059435573_aoai', 'type': 'Microsoft.MachineLearningServices/workspaces/connections', 'properties': {'authType': 'ApiKey', 'credentials': {'key': 'e40e687bdd2e4ebfa6fad980efb22740'}, 'group': 'AzureAI', 'category': 'AzureOpenAI', 'expiryTime': None, 'target': 'https://ai-sasumai920059435573.openai.azure.com/', 'createdByWorkspaceArmId': '/subscriptions/75703df0-38f9-4e2e-8328-45f6fc810286/resourceGroups/rg-sasumai/providers/Microsoft.MachineLearningServices/workspaces/sasum_ai', 'useWorkspaceManagedIdentity': True, 'isSharedToAll': True, 'sharedUserList': [], 'peRequirement': 'NotRequired', 'peStatus': 'NotApplicable', 'error': None, 'metadata': {'ApiType': 'Azure', 'ResourceId': '/subscriptions/75703df0-38f9-4e2e-8328-45f6fc810286/resourceGroups/rg-sasumai/providers/Microsoft.CognitiveServices/accounts/ai-sasumai920059435573', 'Location': 'westus3', 'ApiVersion': '2023-07-01-preview', 'DeploymentApiVersion': '2023-10-01-preview'}}, 'systemData': {'createdAt': '2024-06-11T21:12:07.4070049Z', 'createdBy': 'sasum@microsoft.com', 'createdByType': 'User', 'lastModifiedAt': '2024-06-11T21:12:07.4070049Z', 'lastModifiedBy': 'sasum@microsoft.com', 'lastModifiedByType': 'User'}}
-
-        category = resp['properties']['category']
-
-        if category == "AzureOpenAI":
-            return {
-                "target": resp['properties']['target'],
-                "key": resp['properties']['credentials']['key'],
-                "api-version": resp['properties']['metadata']['ApiVersion']
-            }
-        elif category == "Serverless":
-            return {
-                "target": resp['properties']['target'],
-                "key": resp['properties']['credentials']['key'],
-                "metadata": resp['properties']['metadata'],
-            }
+        return {
+            "category": resp['properties']['category'],
+            "target": resp['properties']['target'],
+            "key": resp['properties']['credentials']['key'],
+            "metadata": resp['properties']['metadata'],
+        }
 
     def _get_workspace_connection_by_name(self) -> dict:
         """Get a workspace connection from the workspace."""

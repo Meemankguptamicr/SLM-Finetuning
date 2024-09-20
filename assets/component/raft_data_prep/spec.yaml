@@ -89,7 +89,7 @@ outputs:
 
 code: ../src
 command: >-
-  python generate_data.py
+  python prepare_data.py
   --input_doctype ${{inputs.doctype}}
   --input_datapath ${{inputs.docpath}}
   --distractors ${{inputs.distractors}}

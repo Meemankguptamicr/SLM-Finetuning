@@ -1,17 +1,21 @@
+import time
+import logging
 from abc import ABC
 from typing import Any
-from langchain_openai import OpenAIEmbeddings, AzureOpenAIEmbeddings
-from openai import AzureOpenAI, OpenAI
-import logging
-from env_config import read_env_config, set_env
-from os import environ, getenv
-import time
 from threading import Lock
+
+from os import environ, getenv
+from openai import AzureOpenAI, OpenAI
+from langchain_openai import OpenAIEmbeddings, AzureOpenAIEmbeddings
+
 from azure.identity import DefaultAzureCredential, ManagedIdentityCredential
 from azure.identity import get_bearer_token_provider
 
+from raft.env_config import read_env_config, set_env
+
 
 logger = logging.getLogger("client_utils")
+
 
 def build_openai_client(env_prefix : str = "COMPLETION", **kwargs: Any) -> OpenAI:
     """
