@@ -1,21 +1,23 @@
+import os
+import json
+import time
+import argparse
+import logging
+import multiprocessing as mp
 from typing import Any
 from openai import RateLimitError
 from openai.types.chat import ChatCompletionMessageParam
-import multiprocessing as mp
-import time
-import argparse
-import json
-import os
-from client_utils import StatsCompleter, UsageStats, build_openai_client
-import logging
-from logconf import log_setup
+
 from tqdm import tqdm
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from dotenv import load_dotenv
 from tenacity import Retrying, retry, wait_exponential, retry_if_exception_type, before_sleep_log
-from client_utils import CompletionsCompleter
+from raft.client_utils import StatsCompleter, UsageStats, build_openai_client
+from raft.logconf import log_setup
+
 
 load_dotenv()  # take environment variables from .env.
+
 
 def get_args() -> argparse.Namespace:
     """

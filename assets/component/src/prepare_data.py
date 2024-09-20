@@ -1,3 +1,8 @@
+# Copyright (c) Microsoft Corporation.
+# Licensed under the MIT License.
+
+"""Prepare data."""
+
 import os
 import pandas
 import numpy
@@ -5,24 +10,22 @@ import sys
 
 import argparse
 import logging
-from pathlib import Path
-from typing import Dict, Literal, List, Union
 
 import constants
+from azureml.core import Run
+from pathlib import Path
+from raft.logconf import log_setup
+from raft.raft import docTypes
+from raft.raft import main as run_raft
+from raft.format import main as run_format
 from auth_provider import WorkspaceConnectionAuthProvider
-from logconf import log_setup
-from raft import docTypes
-from raft import main as run_raft
-from format import DatasetFormat, datasetFormats
-from format import main as run_format
-
 
 
 log_setup()
 logger = logging.getLogger("raft")
 
 
-def get_combined_parser_args() -> argparse.Namespace:
+def get_parser_args() -> argparse.Namespace:
     """_summary_
 
     Returns:
@@ -49,6 +52,7 @@ def get_combined_parser_args() -> argparse.Namespace:
 
     # output paths
     main_parser.add_argument("--generated_dataset_full", required=True, help="Output path where generated dataset will be saved in full")
+    main_parser.add_argument("--generated_dataset_full_with_cot_answers", required=True, help="Output path where generated dataset will be saved in full along with cot answers")
     main_parser.add_argument("--generated_dataset_train", required=True, help="Output path where generated dataset will be saved for training")
     main_parser.add_argument("--generated_dataset_valid", required=True, help="Output path where generated dataset will be saved for validation")
 
@@ -59,20 +63,25 @@ def get_combined_parser_args() -> argparse.Namespace:
 
 
 def validate_env():
+    """Validate OAI env vars are present in the env.
+
+    Raises:
+        Exception: if any of the requried AOAI env vars are missing.
+    """
     # ensure required OAI env vars are present
     for item in constants.AZURE_OPENAI_REQUIRED_VARS:
         if os.environ.get(item, None) is None:
             raise Exception(f"key {item} does not exist in the env")
-        
 
 
 def main():
-    args = get_combined_parser_args()
+    """Run main."""
+    args = get_parser_args()
 
     chat_completion_workspace_connection = args.chat_completion_workspace_connection
     embedding_workspace_connection = args.embedding_workspace_connection
-    input_datapath = args.input_datapath
     input_doctype = args.input_doctype
+    input_datapath = Path(args.input_datapath)
 
     chunk_size = args.chunk_size
     distractors = args.distractors
@@ -82,9 +91,10 @@ def main():
     oracle_context_percentage = args.oracle_context_percentage
     workers = args.workers
 
-    generated_dataset_full = args.generated_dataset_full
-    generated_dataset_train = args.generated_dataset_train
-    generated_dataset_valid = args.generated_dataset_valid
+    generated_dataset_full = Path(args.generated_dataset_full).absolute()
+    generated_dataset_train = Path(args.generated_dataset_train).absolute()
+    generated_dataset_valid = Path(args.generated_dataset_valid).absolute()
+    generated_dataset_full_with_cot_answers = Path(args.generated_dataset_full_with_cot_answers).absolute()
 
     # fetch deployment details from aoai workspace connection
     workspace_auth_provider = WorkspaceConnectionAuthProvider(connection_name=chat_completion_workspace_connection, endpoint_type=constants.EndpointType.Serverless)
@@ -97,18 +107,18 @@ def main():
     os.environ[constants.EMBEDDING_AZURE_OPENAI_KEY] = deployment_details['key']
     os.environ[constants.EMBEDDING_AZURE_OPENAI_ENDPOINT] = deployment_details['target']
 
-    raft_output_dir = "tmp/raft/out"
+    raft_output_dir = Path("tmp/raft/out").absolute()
 
     sys.argv.clear()
     sys.argv.extend([
-        "raft.py",
-        "--datapath", input_datapath,
+        "raft/raft.py",
+        "--datapath", input_datapath.as_posix(),
         "--doctype", input_doctype,
         "--distractors", str(distractors),
         "--questions", str(questions),
         "--chunk_size", str(chunk_size),
         "--workers", str(workers),
-        "--output", raft_output_dir,
+        "--output", raft_output_dir.as_posix(),
         "--output-format", "hf",
         "--output-type", "jsonl",
         "--p", str(oracle_context_percentage),
@@ -125,9 +135,9 @@ def main():
 
     sys.argv.clear()
     sys.argv.extend([
-        "format.py",
+        "raft/format.py",
         "--input", f"{raft_output_dir}/data-00000-of-00001.arrow",
-        "--output", generated_dataset_full,
+        "--output", generated_dataset_full.as_posix(),
         "--output-format", "chat"
     ])
 
@@ -148,6 +158,13 @@ def main():
     hf_train_df.to_json(generated_dataset_train, orient="records", lines=True)
     hf_valid_df.to_json(generated_dataset_valid, orient="records", lines=True)
     logger.info("saved training and validation dataset")
+
+    # save raft output to the run
+    run = Run.get_context()
+    logger.info("Uploading raft outputs to run")
+    run.upload_folder("raft_outputs", raft_output_dir)
+    logger.info("Upload completed")
+
 
 if __name__ == "__main__":
     main()

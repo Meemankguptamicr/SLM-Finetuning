@@ -1,13 +1,14 @@
-from abc import ABC, abstractmethod
-import argparse
-from datasets import Dataset, load_dataset
-from typing import Dict, Literal, Any, get_args
-from logconf import log_setup
-import logging
-
 """
 This file allows to convert raw HuggingFace Datasets into files suitable to fine tune completion and chat models.
 """
+
+import logging
+import argparse
+from abc import ABC, abstractmethod
+from datasets import Dataset, load_dataset
+from raft.logconf import log_setup
+from typing import Dict, Literal, Any, get_args
+
 
 OutputDatasetType = Literal["parquet", "jsonl"]
 outputDatasetTypes = list(get_args(OutputDatasetType))
@@ -19,6 +20,7 @@ DatasetFormat = Literal["hf", "completion", "chat", "eval"]
 datasetFormats = list(get_args(DatasetFormat))
 
 default_chat_system_prompt = "The following is a conversation with an AI assistant. The assistant is helpful, clever, friendly and gives concise and accurate answers."
+
 
 def get_args() -> argparse.Namespace:
     """
@@ -49,6 +51,7 @@ class DatasetFormatter(ABC):
     def format(self, ds: Dataset, params: Dict[str, str]) -> Dataset:
         pass
 
+
 class DatasetExporter(ABC):
     """
     Base class for dataset exporters. Exporters export dataset to different file types, JSONL, Parquet, ...
@@ -56,6 +59,7 @@ class DatasetExporter(ABC):
     @abstractmethod
     def export(self, ds: Dataset, output_path: str):
         pass
+
 
 class DatasetConverter():
     """
@@ -87,6 +91,7 @@ class DatasetConverter():
         newds = formatter.format(ds, **params)
         exporter = self.exporters[output_type]
         exporter.export(newds, output_path)
+
 
 class HuggingFaceDatasetFormatter(DatasetFormatter):
     """
