@@ -2,6 +2,7 @@ import streamlit as st
 import json
 import os
 from finetuning import RAFT, DSF
+from dataPrepJob import new_job_request
 
 st.title("Compare RAFT vs DSF")
 
@@ -20,7 +21,7 @@ if st.button("Data Prep"):
         st.error("PDF file path is invalid. Please enter a valid path.")
     # todo data prep steps
     st.write("Start Data Preparation")
-    json_file_path = "data/testFile"
+    new_job_request();
 
 # Process Data if input is given
 if st.button("Compare RAFT vs DSF"):
