@@ -202,7 +202,7 @@ def train_model_unsloth(model, tokenizer, train_dataset, val_dataset, test_datas
     trainer_stats = trainer.train()
     
     train_runtime = trainer_stats.metrics['train_runtime']
-    train_runtime_minutes = round(train_runtime, 2)
+    train_runtime_minutes = round(train_runtime/60, 2)
     
     used_memory = round(torch.cuda.max_memory_reserved() / 1024 / 1024 / 1024, 3)
     used_memory_for_lora = round(used_memory - start_gpu_memory, 3)
