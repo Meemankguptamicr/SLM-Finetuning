@@ -1,0 +1,15 @@
+numpy
+transformers
+peft
+accelerate
+bitsandbytes
+flash-attn
+trl
+auto-gptq
+einops
+openpyxl
+mlflow
+optimum
+azureml-sdk
+unsloth==2024.9
+tf-keras==2.17.0

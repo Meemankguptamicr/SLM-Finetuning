@@ -1,0 +1,37 @@
+#define the job to train the model
+$schema: https://azuremlschemas.azureedge.net/latest/commandComponent.schema.json
+type: command
+
+name: batch_inference_result
+display_name: Batch Inference
+
+command: >
+  python score.py
+  --base-model-id ${{inputs.base_model_id}}
+  --model-version ${{inputs.model_version}}
+  --ground-truth-file ${{inputs.ground_truth_file}}
+  --model-dir ${{inputs.model_dir}}
+  --inference-result ${{outputs.inference_result}}
+
+# Define the inputs section
+inputs:
+  base_model_id:
+    type: string
+  model_version:
+    type: string
+  ground_truth_file:
+    type: uri_file
+  model_dir:
+    type: uri_folder
+    
+outputs:
+  inference_result: 
+    type: uri_file
+    
+code: ./src
+distribution:
+  type: pytorch
+  process_count_per_instance: 1
+resources:
+  instance_count: 1
+environment: azureml:msft-raft-finetuning-env@latest
