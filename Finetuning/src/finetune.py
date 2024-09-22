@@ -228,8 +228,8 @@ def train_model_unsloth(model, tokenizer, train_dataset, val_dataset, test_datas
         print("Validation loss not found.")
     
     run.log("train-runtime-minutes", float(train_runtime_minutes))
-    run.log("peak-reserved-memory", float(used_memory))
-    run.log("peak-reserved-memory-for-training", float(lora_percentage))
+    run.log("peak-reserved-memory-gb", float(used_memory))
+    run.log("peak-reserved-memory-for-training-gb", float(used_memory_for_lora))
     run.log("training-loss", train_loss)
     run.log("validation-loss", validation_loss)
     
