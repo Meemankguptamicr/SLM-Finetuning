@@ -1,174 +1,61 @@
-# Llama 3.1 405B distillation using UC Berkeley's RAFT recipe on Azure AI Serverless
+# SFTA: Accelerating Fine-Tuning of Small Language Models for Optimized Deployment
 
+Welcome to SFTA, a comprehensive toolkit designed to accelerate the fine-tuning of Small Language Models (SLMs), enabling faster, more efficient deployment tailored to domain-specific needs.
 
-<p align="center">
-    <img src="./doc/gorilla-distillation.jpeg" width="75%" />
-    <p align="center"><i>Generated using DALL-e 3 on Azure AI</i></p>
-</p>
+## Why SFTA?
 
-This repository is a recipe that will walk you through using [Meta Llama 3.1 405B](https://aka.ms/c/learn-deploy-llama) deployed on [Azure AI](https://aka.ms/c/learn-ai) to generate a synthetic dataset using [UC Berkeley's Gorilla](https://aka.ms/ucb-gorilla) project RAFT method (see [blog post](https://aka.ms/raft-blog)). The synthetically generated dataset will be used to finetune a selection of student models. Finally, we will deploy the fine-tuned model and evaluate its performance compared to a baseline model.
+In the landscape of AI and machine learning, generic Large Language Models (LLMs) often struggle with domain-specific terminology and can be prone to generating hallucinated information. SFTA addresses these challenges by empowering presales and delivery teams to quickly prototype domain-specific SLMs for customized copilots and Retrieval-Augmented Generation (RAG) scenarios. By providing tools for synthetic data generation, fine-tuning, evaluation, and deployment, SFTA facilitates rapid time-to-market, reduces costs, and broadens the range of potential use cases.
 
-<table>
-    <tr>
-        <td><img src="./doc/microsoft-logo.png" style="max-height:100px; height: auto;"/></td>
-        <td><img src="./doc/meta-logo.png" style="max-height:100px; height: auto;" /></td>
-        <td><img src="./doc/ucb-logo.png" style="max-height:100px; height: auto;" /></td>
-    </tr>
-</table>
+## Why Choose Small Language Models (SLMs)?
 
-**Project Goal**: The primary objective of this project is to simplify and automate the process of distilling large language models. The workflows and notebooks are meant to be as hands-free as possible, ensuring that even complex tasks like generating synthetic datasets, fine-tuning models, and deploying them can be accomplished with minimal manual intervention. Whether you’re a beginner or an expert, our focus is on providing a seamless experience that allows you to focus on the results rather than the process.
+SLMs are lightweight and resource-efficient, making them ideal for applications that require privacy-sensitive data handling or need to be deployed at the edge, such as in remote locations or on devices with limited computational resources. In contrast, LLMs are typically larger, more resource-intensive, and reliant on cloud infrastructure, making them less suitable for these specialized environments.
 
-## More about RAFT
+## Key Components of SFTA
 
-- [Microsoft/Meta Blog post](https://aka.ms/raft-blog): RAFT:  A new way to teach LLMs to be better at RAG
-- [Paper](https://aka.ms/raft-paper): RAFT: Adapting Language Model to Domain Specific RAG
-- [UC Berkeley blog post](https://aka.ms/raft-blog-ucb): RAFT: Adapting Language Model to Domain Specific RAG
-- [Meta blog post](https://aka.ms/raft-blog-meta): RAFT: Sailing Llama towards better domain-specific RAG
-- [Gorilla project home](https://aka.ms/gorilla-home): Large Language Model Connected with Massive APIs
-- [RAFT Github project](https://aka.ms/raft-repo)
+### 1. SLM RAFT
+SLM RAFT (Retrieve And Fine-Tune) is a unique approach designed to optimize the training of SLMs. The process involves:
 
-## Getting started / Provisioning Azure AI infrastructure
+- **Synthetic Data Generation**: Creating domain-specific QA pairs to fine-tune models effectively.
+- **Contextual Retrieval**: Using prompt engineering to fetch relevant chunks of information, ensuring the model has access to the necessary context.
+- **Domain-Specific Training**: Fine-tuning SLMs to generate accurate, informed responses tailored to specialized fields.
 
-The infrastructure for this project is fully provisioned using the Azure Developer CLI ([AZD](https://aka.ms/c/learn/azd)). AZD simplifies the deployment process by automating the setup of all required Azure resources, ensuring that you can get started with minimal configuration. This approach allows you to focus on the core aspects of model distillation and fine-tuning, while AZD handles the complexities of cloud resource management behind the scenes. By leveraging AZD, the project maintains a consistent and reproducible environment, making it easier to collaborate and scale.
+### 2. LLM RAG
+For scenarios where LLMs are still preferred, the RAG method enables:
 
-The easiest is to open the project in Codespaces (or in VS Code Dev Container locally). It comes with azd included.
+- **Document Retrieval**: Extracting relevant chunks of information from a large set of documents.
+- **Prompt Engineering**: Generating answers by dynamically integrating the retrieved information into the LLM's response generation process.
 
-[![Open in GitHub Codespaces](https://github.com/codespaces/badge.svg)](https://codespaces.new/Azure-Samples/llama-raft-recipe)
+### 3. SFT: Supervised Fine-Tuning
+Supervised Fine-Tuning (SFT) involves training models on QA datasets to improve their performance in answering questions. It can also incorporate additional documents to enable the model to generate well-informed responses, similar to having reference material available during a test.
 
-Login using azd
+### 4. Synthetic Data Pipeline
+Our synthetic data pipeline simplifies the handling of various data formats, such as PDF documents. Users can upload their data to a blob or local storage, and the pipeline will process it, generating high-quality synthetic data that can be used to fine-tune SLMs.
 
-```
-azd auth login --use-device-code
-```
+## Conceptual Approach
 
-Provision the infrastructure
+SFTA provides a generalized pipeline for fine-tuning SLM models, which can also be adapted for LLM + RAG models. This flexible approach allows teams to:
 
-```
-azd up
-```
+- **Upload Data**: Simply upload your data, whether it's in a PDF format or another supported type, to blob or local storage.
+- **Automated Data Handling**: Our pipeline automatically processes the data, creating synthetic QA pairs and preparing it for model training.
+- **Model Training and Deployment**: Use our scripts to fine-tune your SLM or LLM models, and deploy them quickly with minimal configuration.
+- **Evaluation and Benchmarking**: Evaluate the performance of both SLM and LLM models using our benchmarking tools. This allows you to choose the best approach for your specific requirements.
 
-The post provisioning [tests.sh](./infra/azd/hooks/tests.sh) script will run infra integration tests to make sure everything is deployed successfully.
+## How SLM RAFT is Different
 
-Another post provisioning script, [export_env.sh](./infra/azd/hooks/export_env.sh) will export the environment variables for the provisioned infrastructure to the generated [./.env.state](./.env.state) file.
+SLM RAFT stands out by combining several techniques to fine-tune SLMs effectively:
 
-### Bring you own models
+- **Customized Training**: SLMs are fine-tuned with domain-specific QA pairs, ensuring that the model is well-adapted to the specialized language and requirements of the target domain.
+- **Context-Aware Responses**: By retrieving relevant context through prompt engineering, SLM RAFT ensures that the model's responses are both accurate and informed.
+- **Efficient Deployment**: SLMs, being smaller and more resource-efficient, are perfect for edge deployments, where larger models may not be feasible.
 
-The easiest is to provision the infrastructure using azd but you can of course also bring your own models. Just provide environment variables for endpoints of your models in the [./.env](./.env) manual env file at the root of the project.
+## Getting Started
 
-<details>
-<summary>Environment variable configuration</summary>
+1. **Clone the Repository**: Download the SFTA toolkit from GitHub.
+2. **Prepare Your Data**: Upload your data to blob or local storage. The toolkit supports various formats, including PDF.
+3. **Run the Synthetic Data Pipeline**: Use our scripts to generate synthetic QA pairs and prepare your data for fine-tuning.
+4. **Fine-Tune Your Model**: Select your model, whether it's an SLM or LLM, and use our fine-tuning scripts to adapt it to your domain-specific needs.
+5. **Deploy and Evaluate**: Deploy your model using our deployment scripts and evaluate its performance using the provided benchmarking tools.
 
-Those environment variables are expected by RAFT cli scripts. They are suffixed by the purpose of the model `COMPLETION`, `EMBEDDING`, `BASELINE` followed by either standard **OpenAI** or **Azure OpenAI** variable names.
+## Conclusion
 
-Choose for each model purpose either one of the following API styles:
-
-<details>
-<summary>OpenAI API</summary>
-
-| Env var name                    | Explanation  |
-| ------------------------------- | -----  |
-| `COMPLETION_OPENAI_API_KEY`     | API Key for the teacher model  |
-| `COMPLETION_OPENAI_BASE_URL`    | Base URL for the teacher model  |
-| `COMPLETION_OPENAI_DEPLOYMENT`  | Deployment name for the teacher model  |
-| `EMBEDDING_OPENAI_API_KEY`      | API Key for the embedding model  |
-| `EMBEDDING_OPENAI_BASE_URL`     | Base URL for the embedding model  |
-| `EMBEDDING_OPENAI_DEPLOYMENT`   | Deployment name for the embedding model  |
-| `BASELINE_OPENAI_API_KEY`       | API Key for the baseline model  |
-| `BASELINE_OPENAI_BASE_URL`      | Base URL for the baseline model  |
-| `BASELINE_OPENAI_DEPLOYMENT`    | Deployment name for the baseline model  |
-
-</details>
-
-<details>
-<summary>Azure OpenAI API</summary>
-
-| Env var name                         | Explanation  |
-| ------------------------------------ | -----  |
-| `COMPLETION_AZURE_OPENAI_API_KEY`    | API Key for the teacher model  |
-| `COMPLETION_AZURE_OPENAI_ENDPOINT`   | Endpoint for the teacher model  |
-| `COMPLETION_AZURE_OPENAI_DEPLOYMENT` | Deployment name for the teacher model  |
-| `COMPLETION_OPENAI_API_VERSION`      | API Version for the teacher model  |
-| `EMBEDDING_AZURE_OPENAI_API_KEY`     | API Key for the embedding model  |
-| `EMBEDDING_AZURE_OPENAI_ENDPOINT`    | Endpoint for the embedding model  |
-| `EMBEDDING_AZURE_OPENAI_DEPLOYMENT`  | Deployment name for the embedding model  |
-| `EMBEDDING_OPENAI_API_VERSION`       | API Version for the embedding model  |
-| `BASELINE_AZURE_OPENAI_API_KEY`      | API Key for the baseline model  |
-| `BASELINE_AZURE_OPENAI_ENDPOINT`     | Endpoint for the baseline model  |
-| `BASELINE_AZURE_OPENAI_DEPLOYMENT`   | Deployment name for the baseline model  |
-| `BASELINE_OPENAI_API_VERSION`        | API Version for the baseline model  |
-
-</details>
-
-</details>
-
-## Notebooks
-
-This repository is organized in 4 notebooks, one for each step of the process:
-
-| Notebook      | Explanation      |
-| ------------- | ---------------- |
-| [1_gen.ipynb](./1_gen.ipynb) | Generate a finetuning dataset using RAFT |
-| [2_finetune.ipynb](./2_finetune.ipynb) | Fine tune a base model using the generated dataset |
-| [3_deploy.ipynb](./3_deploy.ipynb) | Deploy the fine tuned model |
-| [4_eval.ipynb](./4_eval.ipynb) | Evaluate the fine tuned model |
-
-## Run time and costs
-
-**Warning**: The times and costs mentioned bellow are indications to give you a sense of what to expect but can vary dramatically depending on your experience, please monitor your usage to avoid surprises.
-
-| Notebook      | Run time      | Cost      |
-| ------------- | ---------------- | ---------------- |
-| [1_gen.ipynb](./1_gen.ipynb) | From 5 minutes for the sample to multiple days for bigger domains | From $1 for the sample to $50 or more for bigger domains  |
-| [2_finetune.ipynb](./2_finetune.ipynb) | Roughly 1.5 hours | Roughly $50 |
-| [3_deploy.ipynb](./3_deploy.ipynb) | < 10 minutes | < $1 |
-| [4_eval.ipynb](./4_eval.ipynb) | From 5 minutes for the sample to multiple days for bigger domains | From $1 for the sample to $50 or more for bigger domains |
-
-## Dormant infrastructure costs
-
-While not used, the infrastructure of this project won't cost much but will still cost a bit.
-
-**TODO**: provide costs estimations for dormant infra
-
-## Configuration files
-
-| File      | Explanation      |
-| ------------- | ---------------- |
-| [.env](./.env) | User provided environment variables read by notebooks and scripts |
-| [.env.state](./.env.state) | Environment variables for resources created during notebooks execution and shared by all notebooks |
-| [config.json](./config.json) | Configuration necessary to connect to the Azure AI Studio Hub (same as Azure ML Workspace) |
-
-## Parameterized execution
-
-In addition to executing notebooks interactively, the notebooks also support parameterized command line execution using [papermill](https://papermill.readthedocs.io/).
-
-### Parameter files
-
-The parameter files are contained in folder [parameters](./parameters/) and support the following configurations:
-
-| Parameter file     | Model      | Format      |
-| ------------- | ---------------- | ---------------- |
-| [Llama-2-7b.yaml](./parameters/Llama-2-7b.yaml)   | Llama-2-7b | Completion |
-| [Meta-Llama-3-8B-Instruct.yaml](./parameters/Meta-Llama-3-8B-Instruct.yaml)   | Meta-Llama-3-8B-Instruct | Chat |
-| [Meta-Llama-3.1-8B-Instruct.yaml](./parameters/Meta-Llama-3.1-8B-Instruct.yaml)   | Meta-Llama-3.1-8B-Instruct | Chat |
-
-### Running notebooks from the command line with a parameter file
-
-Notebooks can be run all at once with a given parameter file using the following command:
-
-```
-./run_all.sh -p ./parameters/Meta-Llama-3.1-8B-Instruct.yaml
-```
-
-## Taking down the infrastructure
-
-After you are done working with the project, you can take down the infrastructure with the following command.
-
-**IMPORTANT**: Please be aware that this will **DELETE** everything related to this project including **generated datasets** and **fine-tuned models**.
-
-**IMPORTANT**: Save everything important to you before running this command.
-
-```
-azd down --purge
-```
-
-**Note**: The `--purge` parameter is important to reclaim quotas, for example for Azure OpenAI embedding models.
+SFTA empowers teams to build, fine-tune, and deploy domain-specific SLMs quickly and efficiently. By offering a streamlined workflow for data preparation, model training, and evaluation, SFTA reduces the time and resources required to bring specialized AI solutions to market. Whether you're developing custom copilots or enhancing RAG capabilities, SFTA provides the tools you need to succeed
