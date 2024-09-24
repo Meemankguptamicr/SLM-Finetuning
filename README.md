@@ -13,7 +13,7 @@ SLMs are lightweight and resource-efficient, making them suitable for applicatio
 ## Key Components of SFTA
 
 ### 1. SLM RAFT
-RAFT (Retrieval Aware Fine-Tuning) combines the approaches of closed-book and open-book for conversational AI. More details about RAFT can be found here.
+RAFT (Retrieval Aware Fine-Tuning) combines the approaches of closed-book and open-book for conversational AI. More details about RAFT can be found [here](https://techcommunity.microsoft.com/t5/ai-ai-platform-blog/raft-a-new-way-to-teach-llms-to-be-better-at-rag/ba-p/4084674).
 In this repository, we propose to use SLMs in the context of RAFT. The process involves:
 
 - **Synthetic Data Generation**: Creating domain-specific QA pairs to fine-tune models effectively (uses assets from https://github.com/ShishirPatil/gorilla/tree/main/raft).
