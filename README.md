@@ -8,14 +8,15 @@ In the landscape of AI and machine learning, generic Large Language Models (LLMs
 
 ## Why Choose Small Language Models (SLMs)?
 
-SLMs are lightweight and resource-efficient, making them ideal for applications that require privacy-sensitive data handling or need to be deployed at the edge, such as in remote locations or on devices with limited computational resources. In contrast, LLMs are typically larger, more resource-intensive, and reliant on cloud infrastructure, making them less suitable for these specialized environments.
+SLMs are lightweight and resource-efficient, making them suitable for applications that require privacy-sensitive data handling on premises or need to be deployed at the edge, such as in remote locations or on devices with limited computational resources. In contrast, LLMs are larger, more resource-intensive, and reliant on cloud infrastructure, making them less suitable for these specialized environments.
 
 ## Key Components of SFTA
 
 ### 1. SLM RAFT
-SLM RAFT (Retrieve And Fine-Tune) is a unique approach designed to optimize the training of SLMs. The process involves:
+RAFT (Retrieval Aware Fine-Tuning) combines the approaches of closed-book and open-book for conversational AI. More details about RAFT can be found here.
+In this repository, we propose to use SLMs in the context of RAFT. The process involves:
 
-- **Synthetic Data Generation**: Creating domain-specific QA pairs to fine-tune models effectively.
+- **Synthetic Data Generation**: Creating domain-specific QA pairs to fine-tune models effectively (uses assets from https://github.com/ShishirPatil/gorilla/tree/main/raft).
 - **Contextual Retrieval**: Using prompt engineering to fetch relevant chunks of information, ensuring the model has access to the necessary context.
 - **Domain-Specific Training**: Fine-tuning SLMs to generate accurate, informed responses tailored to specialized fields.
 
