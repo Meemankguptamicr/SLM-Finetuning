@@ -65,10 +65,9 @@ outputs:
   model_dir:
     type: uri_folder
 
-code: ./
+code: .
 
-environment:
-  image: azureml:gpu-finetuning-environment@latest
+environment: azureml:gpu-finetuning-environment@latest
 
 command: >-
   python -m torch.distributed.run finetune_model.py

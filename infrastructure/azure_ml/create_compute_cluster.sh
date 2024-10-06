@@ -2,7 +2,7 @@
 
 set -e
 
-COMPUTE_NAME=${COMPUTE_NAME:-"gpu-cluster"}
+COMPUTE_NAME=${COMPUTE_NAME:-"gpu-fintetuning-compute"}
 VM_SIZE=${VM_SIZE:-"Standard_NC24ads_A100_v4"}
 COMPUTE_TYPE=${COMPUTE_TYPE:-"AmlCompute"}
 MIN_NODES=${MIN_NODES:-0}
