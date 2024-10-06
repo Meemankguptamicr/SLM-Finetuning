@@ -15,7 +15,7 @@ inputs:
   run_name: raft_finetuning_demo
   train_file:
     type: uri_file
-    path: "data/processed/raft_sample_data-files/raft_sample_data-ft.train.jsonl"
+    path: "../data/processed/raft_sample_data-files/raft_sample_data-ft.train.jsonl"
   base_model_id: microsoft/Phi-3-mini-128k-instruct
   quantization_aware_training: true
   flash_attention: true
