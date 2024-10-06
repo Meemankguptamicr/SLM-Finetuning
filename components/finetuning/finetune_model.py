@@ -7,7 +7,7 @@ from trl import SFTTrainer, SFTConfig
 from peft import LoraConfig
 from datasets import load_dataset
 import argparse
-from utilities.helper_functions import load_with_transformers, merge_and_save_model
+from common_utils.utilities.helper_functions import load_with_transformers, merge_and_save_model
 
 # Global constants
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")

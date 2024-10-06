@@ -108,6 +108,7 @@ fi
 echo "Installing the common utilities package from components/common..."
 cd components/common
 pip install -e .
+pip show common_utils
 cd ../../
 
 # ---------------------------
