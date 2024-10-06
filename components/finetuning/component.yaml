@@ -57,7 +57,7 @@ inputs:
     choices: ["qlora", "dora", "lora"]
   finetune_approach:
     type: string
-    description: Choose the approach for fine-tuning a model: 'sfttrainer' or 'unsloth'.
+    description: Choose the approach for fine-tuning a model ('sfttrainer' or 'unsloth').
     default: "sfttrainer"
     choices: ["sfttrainer", "unsloth"]
   max_seq_length:
