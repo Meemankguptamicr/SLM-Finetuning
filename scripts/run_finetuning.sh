@@ -101,10 +101,17 @@ else
 fi
 
 # ---------------------------
-# Step 6: Run the Finetuning Pipeline
+# Step 6: Install the common utilities package
+# ---------------------------
+echo "Installing the common utilities package from components/common..."
+cd components/common
+pip install -e .
+cd ../../
+
+# ---------------------------
+# Step 7: Run the Finetuning Pipeline
 # ---------------------------
 PIPELINE_FILE="pipelines/finetuning_pipeline.yaml"
-
 echo "Running the finetuning pipeline using $PIPELINE_FILE..."
 az ml job create --file "$PIPELINE_FILE"
 
