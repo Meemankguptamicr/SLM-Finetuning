@@ -95,6 +95,8 @@ cd "$PROJECT_PATH"
 echo "Checking for Azure ML CLI v2 extension..."
 if ! az extension show -n ml -o none 2>/dev/null; then
     echo "Azure ML CLI v2 not found. Installing the latest stable version..."
+    az extension remove -n azure-cli-ml
+    az extension remove -n ml
     az extension add -n ml
 else
     echo "Azure ML CLI v2 is already installed."
