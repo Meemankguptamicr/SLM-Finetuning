@@ -1,5 +1,7 @@
 # SLM-Finetuning
 
+![Work in Progress](https://img.shields.io/badge/status-work%20in%20progress-yellow)
+
 This repository contains the necessary scripts and infrastructure setup for fine-tuning models in Azure Machine Learning.
 
 ## Clone the repository
