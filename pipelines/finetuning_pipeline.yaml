@@ -7,6 +7,10 @@ description: Pipeline to fine-tune models, with potential for additional jobs.
 
 # Pipeline-level inputs
 inputs:
+  run_name:
+    type: string
+    description: Name of the run.
+    default: "raft_finetuning_demo"
   base_model_id:
     type: string
     description: ID of the base model to fine-tune.
@@ -14,17 +18,28 @@ inputs:
   train_file:
     type: uri_file
     description: URI of the training data file.
-  test_file:
-    type: uri_file
-    description: URI of the test data file.
-  model_version:
+  quantization_aware_training:
+    type: boolean
+    description: Enable quantization-aware training.
+    default: true
+  flash_attention:
+    type: boolean
+    description: Enable flash attention.
+    default: true
+  peft_approach:
     type: string
-    description: Version identifier for the fine-tuned model.
-    default: "v1"
-  precision:
+    description: Choose the PEFT approach (qlora, dora, lora).
+    default: "dora"
+  finetune_approach:
     type: string
-    description: Precision type (int4, int8, fp16, fp32).
-    default: "fp16"
+    description: Choose the approach for fine-tuning a model (sfttrainer, unsloth).
+    default: "sfttrainer"
+    choices: ["sfttrainer", "unsloth"]
+  optimizer:
+    type: string
+    description: Optimizer to use for training (adamw_8bit, adamw_torch_fused).
+    default: "adamw_torch_fused"
+    choices: ["adamw_8bit", "adamw_torch_fused"]
   max_seq_length:
     type: integer
     description: Maximum sequence length for the model.
@@ -49,30 +64,6 @@ inputs:
     type: integer
     description: Number of gradient accumulation steps.
     default: 6
-  lora_r:
-    type: integer
-    description: Rank of the LoRA matrices.
-    default: 256
-  lora_alpha:
-    type: integer
-    description: LoRA alpha parameter.
-    default: 128
-  lora_dropout:
-    type: number
-    description: LoRA dropout rate.
-    default: 0.05
-  target_modules:
-    type: string
-    description: Target modules for LoRA.
-    default: "all-linear"
-  optimizer:
-    type: string
-    description: Optimizer to use for training (adamw_8bit, adamw_torch_fused).
-    default: "adamw_torch_fused"
-  use_dora:
-    type: boolean
-    description: Whether to use DORA optimization.
-    default: true
   gradient_checkpointing:
     type: boolean
     description: Whether to use gradient checkpointing.
@@ -96,26 +87,23 @@ outputs:
 
 jobs:
   finetune_model:
-    type: component
+    type: command
     component: ../components/finetuning/component.yaml
     inputs:
+      run_name: ${{inputs.run_name}}
       base_model_id: ${{inputs.base_model_id}}
       train_file: ${{inputs.train_file}}
-      test_file: ${{inputs.test_file}}
-      model_version: ${{inputs.model_version}}
-      precision: ${{inputs.precision}}
+      quantization_aware_training: ${{inputs.quantization_aware_training}}
+      flash_attention : ${{inputs.flash_attention}}
+      peft_approach: ${{inputs.peft_approach}}
+      finetune_approach: ${{inputs.finetune_approach}}
+      optimizer: ${{inputs.optimizer}}
       max_seq_length: ${{inputs.max_seq_length}}
       num_train_epochs: ${{inputs.num_train_epochs}}
       learning_rate: ${{inputs.learning_rate}}
       per_device_train_batch_size: ${{inputs.per_device_train_batch_size}}
       per_device_eval_batch_size: ${{inputs.per_device_eval_batch_size}}
       gradient_accumulation_steps: ${{inputs.gradient_accumulation_steps}}
-      lora_r: ${{inputs.lora_r}}
-      lora_alpha: ${{inputs.lora_alpha}}
-      lora_dropout: ${{inputs.lora_dropout}}
-      target_modules: ${{inputs.target_modules}}
-      optimizer: ${{inputs.optimizer}}
-      use_dora: ${{inputs.use_dora}}
       gradient_checkpointing: ${{inputs.gradient_checkpointing}}
       logging_steps: ${{inputs.logging_steps}}
       save_steps: ${{inputs.save_steps}}
