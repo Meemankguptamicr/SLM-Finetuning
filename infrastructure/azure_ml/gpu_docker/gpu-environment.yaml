@@ -1,0 +1,4 @@
+$schema: https://azuremlschemas.azureedge.net/latest/environment.schema.json
+name: gpu-finetuning-environment
+build:
+  path: ./infrastructure/azure_ml/gpu_docker

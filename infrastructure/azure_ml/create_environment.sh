@@ -3,7 +3,7 @@
 set -e
 
 ENV_NAME=${ENV_NAME:-"gpu-environment"}
-FILE=${FILE:-"./infrastructure/azure_ml/gpu_docker/Dockerfile"}
+FILE=${FILE:-"./infrastructure/azure_ml/gpu_docker/gpu-environment.yaml"}
 RESOURCE_GROUP=${RESOURCE_GROUP:-"my-resource-group"}
 WORKSPACE_NAME=${WORKSPACE_NAME:-"my-workspace"}
 
@@ -23,7 +23,7 @@ if [ -f "$FILE" ]; then
     echo "Using Dockerfile for environment creation..."
     az ml environment create \
         --name "$ENV_NAME" \
-        --dockerfile "$FILE" \
+        --file "$FILE" \
         --resource-group "$RESOURCE_GROUP" \
         --workspace "$WORKSPACE_NAME"
 else
