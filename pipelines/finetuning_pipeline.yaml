@@ -21,6 +21,7 @@ jobs:
       train_file:
         type: uri_file
         description: URI of the training data file.
+        default: "data/processed/raft_sample_data-files/raft_sample_data-ft.train.jsonl"
 
       base_model_id:
         type: string
