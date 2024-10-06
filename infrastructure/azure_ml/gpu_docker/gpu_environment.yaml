@@ -1,0 +1,11 @@
+$schema: https://azuremlschemas.azureedge.net/latest/environment.schema.json
+name: gpu-finetuning-environment
+description: Environment for GPU-based finetuning with Docker
+image: null
+docker:
+  dockerfile: ./infrastructure/azure_ml/gpu_docker/Dockerfile
+python:
+  interpreterPath: python
+  userManagedDependencies: false
+  condaDependencies: 
+    condaDependenciesFile: null
