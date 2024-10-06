@@ -92,6 +92,8 @@ cd "$PROJECT_PATH"
 # ---------------------------
 # Step 5: Ensure Azure ML CLI v2 Extension is Installed
 # ---------------------------
+az extension remove -n azure-cli-ml
+az extension remove -n ml
 echo "Checking for Azure ML CLI v2 extension..."
 if ! az extension show -n ml -o none 2>/dev/null; then
     echo "Azure ML CLI v2 not found. Installing the latest stable version..."
