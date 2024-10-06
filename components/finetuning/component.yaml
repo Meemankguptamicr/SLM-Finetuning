@@ -47,12 +47,12 @@ inputs:
     default: true
   optimizer:
     type: string
-    description: Optimizer to use for training (adamw_8bit, adamw_torch_fused)
+    description: Optimizer to use for training ('adamw_8bit' or 'adamw_torch_fused')
     default: "adamw_torch_fused"
     choices: ["adamw_8bit","adamw_torch_fused"]
   peft_approach:
     type: string
-    description: Choose the PEFT approach: 'qlora', 'dora', or 'lora'.
+    description: Choose the PEFT approach ('qlora', 'dora' or 'lora').
     default: "lora"
     choices: ["qlora", "dora", "lora"]
   finetune_approach:
