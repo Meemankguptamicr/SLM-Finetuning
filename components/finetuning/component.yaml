@@ -1,10 +1,11 @@
 $schema: https://azuremlschemas.azureedge.net/latest/commandComponent.schema.json
+type: command
 
 name: finetune_model
 display_name: Finetune Model
 tags:
   author: sfta-team
-type: command
+version: 1
 
 inputs:
   run_name:
@@ -66,9 +67,10 @@ outputs:
 
 code: ./
 
-environment: azureml:gpu-finetuning-environment@latest
+environment:
+  image: azureml:gpu-finetuning-environment@latest
 
-command: >
+command: >-
   python -m torch.distributed.run finetune_model.py
   --run-name ${{inputs.run_name}}
   --train-file ${{inputs.train_file}}

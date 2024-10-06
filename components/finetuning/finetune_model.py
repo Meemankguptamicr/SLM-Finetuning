@@ -21,8 +21,8 @@ os.environ['AZUREML_ARTIFACTS_DEFAULT_TIMEOUT'] = "1200"  # Timeout for AzureML 
 def parse_args():
     parser = argparse.ArgumentParser(description="Argument parser for fine-tuning a model.")
     parser.add_argument("--run-name", type=str, help="Name of the fine-tuning run", required=True)
-    parser.add_argument("--base-model-id", type=str, help="Base model id in HuggingFace Hub", default=4096)
     parser.add_argument("--train-file", type=str, help="File path pre-processed training data", required=True)
+    parser.add_argument("--base-model-id", type=str, help="Base model id in HuggingFace Hub", default=4096)
     parser.add_argument("--finetune-approach", type=str, help="Choose the approach for fine-tuning a model ('sfttrainer' or 'unsloth')", 
                         default="sfttrainer", choices=["sfttrainer", "unsloth"])
     parser.add_argument("--quantization-aware-training", type=bool, help="Enable quantization-aware training", default=True)
