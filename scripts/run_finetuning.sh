@@ -113,8 +113,8 @@ cd ../../
 # ---------------------------
 # Step 7: Run the Finetuning Pipeline
 # ---------------------------
-PIPELINE_FILE="pipelines/finetuning_pipeline.yaml"
+PIPELINE_FILE="pipelines/finetuning_pipeline.yml"
 echo "Running the finetuning pipeline using $PIPELINE_FILE..."
-az ml job create --file "$PIPELINE_FILE" --set jobs.sweep_step.search_space.coef0.min_value=0.5
+az ml job create --file "$PIPELINE_FILE"
 
 echo "Finetuning pipeline submitted successfully."

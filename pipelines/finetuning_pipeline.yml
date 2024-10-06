@@ -115,7 +115,7 @@ outputs:
 jobs:
   finetune_model:
     type: command
-    component: ../components/finetuning/component.yaml
+    component: ../components/finetuning/component.yml
     compute: ${{parent.inputs.finetuning_node_compute}}
     inputs:
       run_name: ${{parent.inputs.run_name}}

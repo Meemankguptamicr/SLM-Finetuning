@@ -5,7 +5,6 @@ name: finetune_model
 display_name: Finetune Model
 tags:
   author: sfta-team
-version: 1
 
 inputs:
   run_name:
