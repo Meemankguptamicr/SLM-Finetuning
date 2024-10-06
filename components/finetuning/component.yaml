@@ -1,0 +1,126 @@
+$schema: https://azuremlschemas.azureedge.net/latest/commandComponent.schema.json
+type: command
+
+name: finetune_model
+display_name: Finetune Model
+
+command: >
+  python -m torch.distributed.run finetune.py
+  --base-model-id ${{inputs.base_model_id}}
+  --train-file ${{inputs.train_file}}
+  --test-file ${{inputs.test_file}}
+  --model-version ${{inputs.model_version}}
+  --precision ${{inputs.precision}}
+  --max-seq-length ${{inputs.max_seq_length}}
+  --num-train-epochs ${{inputs.num_train_epochs}}
+  --learning-rate ${{inputs.learning_rate}}
+  --per-device-train-batch-size ${{inputs.per_device_train_batch_size}}
+  --per-device-eval-batch-size ${{inputs.per_device_eval_batch_size}}
+  --gradient-accumulation-steps ${{inputs.gradient_accumulation_steps}}
+  --lora-r ${{inputs.lora_r}}
+  --lora-alpha ${{inputs.lora_alpha}}
+  --lora-dropout ${{inputs.lora_dropout}}
+  --target-modules ${{inputs.target_modules}}
+  --optimizer ${{inputs.optimizer}}
+  --use-dora ${{inputs.use_dora}}
+  --gradient-checkpointing ${{inputs.gradient_checkpointing}}
+  --logging-steps ${{inputs.logging_steps}}
+  --save-steps ${{inputs.save_steps}}
+  --eval-steps ${{inputs.eval_steps}}
+  --model-dir ${{outputs.model_dir}}
+
+inputs:
+  base_model_id:
+    type: string
+    description: ID of the base model to fine-tune.
+    default: "microsoft/Phi-3-mini-128k-instruct"
+  train_file:
+    type: uri_file
+    description: URI of the training data file.
+  test_file:
+    type: uri_file
+    description: URI of the test data file.
+  model_version:
+    type: string
+    description: Version identifier for the fine-tuned model.
+    default: "v1"
+  precision:
+    type: string
+    description: Precision type (int4, int8, fp16, fp32).
+    default: "fp16"
+  max_seq_length:
+    type: integer
+    description: Maximum sequence length for the model.
+    default: 4096
+  num_train_epochs:
+    type: integer
+    description: Number of training epochs.
+    default: 1
+  learning_rate:
+    type: number
+    description: Learning rate for the optimizer.
+    default: 1e-4
+  per_device_train_batch_size:
+    type: integer
+    description: Batch size per device during training.
+    default: 3
+  per_device_eval_batch_size:
+    type: integer
+    description: Batch size per device during evaluation.
+    default: 3
+  gradient_accumulation_steps:
+    type: integer
+    description: Number of gradient accumulation steps.
+    default: 6
+  lora_r:
+    type: integer
+    description: Rank of the LoRA matrices.
+    default: 256
+  lora_alpha:
+    type: integer
+    description: LoRA alpha parameter.
+    default: 128
+  lora_dropout:
+    type: number
+    description: LoRA dropout rate.
+    default: 0.05
+  target_modules:
+    type: string
+    description: Target modules for LoRA.
+    default: "all-linear"
+  optimizer:
+    type: string
+    description: Optimizer to use for training.
+    default: "adamw_torch_fused"
+  use_dora:
+    type: boolean
+    description: Whether to use DORA optimization.
+    default: true
+  gradient_checkpointing:
+    type: boolean
+    description: Whether to use gradient checkpointing.
+    default: true
+  logging_steps:
+    type: integer
+    description: Number of steps between each logging.
+    default: 10
+  save_steps:
+    type: integer
+    description: Number of steps between each checkpoint save.
+    default: 10
+  eval_steps:
+    type: integer
+    description: Number of steps between each evaluation.
+    default: 10
+
+outputs:
+  model_dir: 
+    type: uri_folder
+
+code: ./finetuning
+distribution:
+  type: pytorch
+  process_count_per_instance: 1
+resources:
+  instance_count: 1
+environment: azureml:gpu-environment@latest

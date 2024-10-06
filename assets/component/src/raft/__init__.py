@@ -1,1 +1,0 @@
-# raft generation module init

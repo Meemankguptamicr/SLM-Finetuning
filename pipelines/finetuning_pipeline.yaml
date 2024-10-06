@@ -1,0 +1,124 @@
+$schema: https://azuremlschemas.azureedge.net/latest/pipelineJob.schema.json
+type: pipeline
+
+name: finetuning_pipeline
+display_name: Finetuning Pipeline
+description: Pipeline to fine-tune models, with potential for additional jobs.
+
+# Pipeline-level inputs
+inputs:
+  base_model_id:
+    type: string
+    description: ID of the base model to fine-tune.
+    default: "microsoft/Phi-3-mini-128k-instruct"
+  train_file:
+    type: uri_file
+    description: URI of the training data file.
+  test_file:
+    type: uri_file
+    description: URI of the test data file.
+  model_version:
+    type: string
+    description: Version identifier for the fine-tuned model.
+    default: "v1"
+  precision:
+    type: string
+    description: Precision type (int4, int8, fp16, fp32).
+    default: "fp16"
+  max_seq_length:
+    type: integer
+    description: Maximum sequence length for the model.
+    default: 4096
+  num_train_epochs:
+    type: integer
+    description: Number of training epochs.
+    default: 1
+  learning_rate:
+    type: number
+    description: Learning rate for the optimizer.
+    default: 1e-4
+  per_device_train_batch_size:
+    type: integer
+    description: Batch size per device during training.
+    default: 3
+  per_device_eval_batch_size:
+    type: integer
+    description: Batch size per device during evaluation.
+    default: 3
+  gradient_accumulation_steps:
+    type: integer
+    description: Number of gradient accumulation steps.
+    default: 6
+  lora_r:
+    type: integer
+    description: Rank of the LoRA matrices.
+    default: 256
+  lora_alpha:
+    type: integer
+    description: LoRA alpha parameter.
+    default: 128
+  lora_dropout:
+    type: number
+    description: LoRA dropout rate.
+    default: 0.05
+  target_modules:
+    type: string
+    description: Target modules for LoRA.
+    default: "all-linear"
+  optimizer:
+    type: string
+    description: Optimizer to use for training (adamw_8bit, adamw_torch_fused).
+    default: "adamw_torch_fused"
+  use_dora:
+    type: boolean
+    description: Whether to use DORA optimization.
+    default: true
+  gradient_checkpointing:
+    type: boolean
+    description: Whether to use gradient checkpointing.
+    default: true
+  logging_steps:
+    type: integer
+    description: Number of steps between each logging.
+    default: 10
+  save_steps:
+    type: integer
+    description: Number of steps between each checkpoint save.
+    default: 10
+  eval_steps:
+    type: integer
+    description: Number of steps between each evaluation.
+    default: 10
+
+outputs:
+  model_dir:
+    type: uri_folder
+
+jobs:
+  finetune_model:
+    type: component
+    component: ../components/finetuning/component.yaml
+    inputs:
+      base_model_id: ${{inputs.base_model_id}}
+      train_file: ${{inputs.train_file}}
+      test_file: ${{inputs.test_file}}
+      model_version: ${{inputs.model_version}}
+      precision: ${{inputs.precision}}
+      max_seq_length: ${{inputs.max_seq_length}}
+      num_train_epochs: ${{inputs.num_train_epochs}}
+      learning_rate: ${{inputs.learning_rate}}
+      per_device_train_batch_size: ${{inputs.per_device_train_batch_size}}
+      per_device_eval_batch_size: ${{inputs.per_device_eval_batch_size}}
+      gradient_accumulation_steps: ${{inputs.gradient_accumulation_steps}}
+      lora_r: ${{inputs.lora_r}}
+      lora_alpha: ${{inputs.lora_alpha}}
+      lora_dropout: ${{inputs.lora_dropout}}
+      target_modules: ${{inputs.target_modules}}
+      optimizer: ${{inputs.optimizer}}
+      use_dora: ${{inputs.use_dora}}
+      gradient_checkpointing: ${{inputs.gradient_checkpointing}}
+      logging_steps: ${{inputs.logging_steps}}
+      save_steps: ${{inputs.save_steps}}
+      eval_steps: ${{inputs.eval_steps}}
+    outputs:
+      model_dir: ${{outputs.model_dir}}
