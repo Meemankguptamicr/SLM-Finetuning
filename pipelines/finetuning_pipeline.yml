@@ -1,13 +1,41 @@
 $schema: https://azuremlschemas.azureedge.net/latest/pipelineJob.schema.json
+
+display_name: finetuning_pipeline
+experiment_name: finetuning_experiment
+description: Pipeline to fine-tune small language models
 type: pipeline
 
-name: finetuning_pipeline
-display_name: Finetuning Pipeline
-description: Pipeline to fine-tune models, with potential for additional jobs.
-
 settings:
+  default_datastore: azureml:workspaceblobstore
   default_compute: azureml:cpu-compute
   continue_on_step_failure: false
+
+inputs:
+  finetuning_node_compute: azureml:gpu-fintetuning-compute
+  run_name: raft_finetuning_demo
+  train_file:
+    type: uri_file
+    path: "data/processed/raft_sample_data-files/raft_sample_data-ft.train.jsonl"
+  base_model_id: microsoft/Phi-3-mini-128k-instruct
+  quantization_aware_training: true
+  flash_attention: true
+  peft_approach: dora
+  finetune_approach: sfttrainer
+  optimizer: adamw_torch_fused
+  max_seq_length: 4096
+  num_train_epochs: 1
+  learning_rate: 0.0001
+  per_device_train_batch_size: 3
+  per_device_eval_batch_size: 3
+  gradient_accumulation_steps: 6
+  gradient_checkpointing: true
+  logging_steps: 10
+  save_steps: 10
+  eval_steps: 10
+
+outputs:
+  model_dir:
+    type: uri_folder
 
 jobs:
   finetune_model:
@@ -15,104 +43,23 @@ jobs:
     component: ../components/finetuning/component.yml
     compute: ${{parent.inputs.finetuning_node_compute}}
     inputs:
-      finetuning_node_compute:
-        type: string
-        description: Compute target for the finetuning node.
-        default: "azureml:gpu-fintetuning-compute"
-        
-      run_name:
-        type: string
-        description: Name of the run.
-        default: "raft_finetuning_demo"
-      
-      train_file:
-        type: uri_file
-        description: URI of the training data file.
-        default: "data/processed/raft_sample_data-files/raft_sample_data-ft.train.jsonl"
-
-      base_model_id:
-        type: string
-        description: ID of the base model to fine-tune.
-        default: "microsoft/Phi-3-mini-128k-instruct"
-      
-      quantization_aware_training:
-        type: boolean
-        description: Enable quantization-aware training.
-        default: true
-
-      flash_attention:
-        type: boolean
-        description: Enable flash attention.
-        default: true
-      
-      peft_approach:
-        type: string
-        description: Choose the PEFT approach (qlora, dora, lora).
-        default: "dora"
-        choices: ["qlora", "dora", "lora"]
-
-      finetune_approach:
-        type: string
-        description: Choose the approach for fine-tuning a model (sfttrainer, unsloth).
-        default: "sfttrainer"
-        choices: ["sfttrainer", "unsloth"]
-      
-      optimizer:
-        type: string
-        description: Optimizer to use for training (adamw_8bit, adamw_torch_fused).
-        default: "adamw_torch_fused"
-        choices: ["adamw_8bit", "adamw_torch_fused"]
-
-      max_seq_length:
-        type: integer
-        description: Maximum sequence length for the model.
-        default: 4096
-      
-      num_train_epochs:
-        type: integer
-        description: Number of training epochs.
-        default: 1
-      
-      learning_rate:
-        type: number
-        description: Learning rate for the optimizer.
-        default: 1e-4
-
-      per_device_train_batch_size:
-        type: integer
-        description: Batch size per device during training.
-        default: 3
-      
-      per_device_eval_batch_size:
-        type: integer
-        description: Batch size per device during evaluation.
-        default: 3
-      
-      gradient_accumulation_steps:
-        type: integer
-        description: Number of gradient accumulation steps.
-        default: 6
-      
-      gradient_checkpointing:
-        type: boolean
-        description: Whether to use gradient checkpointing.
-        default: true
-      
-      logging_steps:
-        type: integer
-        description: Number of steps between each logging.
-        default: 10
-      
-      save_steps:
-        type: integer
-        description: Number of steps between each checkpoint save.
-        default: 10
-      
-      eval_steps:
-        type: integer
-        description: Number of steps between each evaluation.
-        default: 10
-
+      run_name: ${{parent.inputs.run_name}}
+      train_file: ${{parent.inputs.train_file}}
+      base_model_id: ${{parent.inputs.base_model_id}}
+      quantization_aware_training: ${{parent.inputs.quantization_aware_training}}
+      flash_attention: ${{parent.inputs.flash_attention}}
+      peft_approach: ${{parent.inputs.peft_approach}}
+      finetune_approach: ${{parent.inputs.finetune_approach}}
+      optimizer: ${{parent.inputs.optimizer}}
+      max_seq_length: ${{parent.inputs.max_seq_length}}
+      num_train_epochs: ${{parent.inputs.num_train_epochs}}
+      learning_rate: ${{parent.inputs.learning_rate}}
+      per_device_train_batch_size: ${{parent.inputs.per_device_train_batch_size}}
+      per_device_eval_batch_size: ${{parent.inputs.per_device_eval_batch_size}}
+      gradient_accumulation_steps: ${{parent.inputs.gradient_accumulation_steps}}
+      gradient_checkpointing: ${{parent.inputs.gradient_checkpointing}}
+      logging_steps: ${{parent.inputs.logging_steps}}
+      save_steps: ${{parent.inputs.save_steps}}
+      eval_steps: ${{parent.inputs.eval_steps}}
     outputs:
-      model_dir:
-        type: uri_folder
+      model_dir: ${{parent.outputs.model_dir}}
