@@ -21,8 +21,9 @@ echo "Registering environment '$ENV_NAME' in Azure ML..."
 
 if [ -f "$FILE" ]; then
     echo "Using Dockerfile for environment creation..."
-    az ml environment create --name "$ENV_NAME" \
-        --file "$DOCKER_FILE" \
+    az ml environment create" \
+        --name "$ENV_NAME" \
+        --file "$FILE" \
         --resource-group "$RESOURCE_GROUP" \
         --workspace "$WORKSPACE_NAME"
 else
