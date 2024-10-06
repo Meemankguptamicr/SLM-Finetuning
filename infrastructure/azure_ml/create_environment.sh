@@ -3,7 +3,7 @@
 set -e
 
 ENV_NAME=${ENV_NAME:-"gpu-environment"}
-FILE=${FILE:-"./infrastructure/azure_ml/gpu_docker/gpu_environment.yml"}
+FILE=${FILE:-"./infrastructure/azure_ml/gpu_docker/"}
 RESOURCE_GROUP=${RESOURCE_GROUP:-"my-resource-group"}
 WORKSPACE_NAME=${WORKSPACE_NAME:-"my-workspace"}
 
