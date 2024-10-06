@@ -92,7 +92,6 @@ cd "$PROJECT_PATH"
 # ---------------------------
 # Step 5: Ensure Azure ML CLI v2 Extension is Installed
 # ---------------------------
-az extension remove -n ml
 echo "Checking for Azure ML CLI v2 extension..."
 if ! az extension show -n ml -o none 2>/dev/null; then
     echo "Azure ML CLI v2 not found. Installing the latest stable version..."
@@ -116,6 +115,6 @@ cd ../../
 # ---------------------------
 PIPELINE_FILE="pipelines/finetuning_pipeline.yaml"
 echo "Running the finetuning pipeline using $PIPELINE_FILE..."
-az ml job create --file "$PIPELINE_FILE"
+az ml job create --file "$PIPELINE_FILE" --set jobs.sweep_step.search_space.coef0.min_value=0.5
 
 echo "Finetuning pipeline submitted successfully."
