@@ -107,7 +107,7 @@ outputs:
     type: uri_folder
 
 # Code location
-code: ./finetuning
+code: ./
 
 # Distribution settings for PyTorch
 distribution:
