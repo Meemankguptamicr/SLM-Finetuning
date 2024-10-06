@@ -3,7 +3,7 @@
 set -e
 
 ENV_NAME=${ENV_NAME:-"gpu-environment"}
-DOCKER_FILE=${DOCKER_FILE:-"./infrastructure/azure_ml/gpu_docker/Dockerfile"}
+FILE=${FILE:-"./infrastructure/azure_ml/gpu_docker/Dockerfile"}
 RESOURCE_GROUP=${RESOURCE_GROUP:-"my-resource-group"}
 WORKSPACE_NAME=${WORKSPACE_NAME:-"my-workspace"}
 
@@ -19,14 +19,14 @@ fi
 
 echo "Registering environment '$ENV_NAME' in Azure ML..."
 
-if [ -f "$DOCKER_FILE" ]; then
+if [ -f "$FILE" ]; then
     echo "Using Dockerfile for environment creation..."
     az ml environment create --name "$ENV_NAME" \
-        --docker-file "$DOCKER_FILE" \
+        --file "$DOCKER_FILE" \
         --resource-group "$RESOURCE_GROUP" \
         --workspace "$WORKSPACE_NAME"
 else
-    echo "Dockerfile not found at '$DOCKER_FILE'. Exiting."
+    echo "Dockerfile not found at '$FILE'. Exiting."
     exit 1
 fi
 
