@@ -3,12 +3,6 @@
 # Exit immediately if a command exits with a non-zero status.
 set -e
 
-echo "Project path: $PROJECT_PATH"
-
-export PYTHONPATH="$PROJECT_PATH/components/common/src:$PYTHONPATH"
-
-echo "Project path after adding components/common/src: $PROJECT_PATH"
-
 # ---------------------------
 # Function to display usage
 # ---------------------------
@@ -62,6 +56,17 @@ if [[ -z "$PROJECT_PATH" ]]; then
     echo "Error: PROJECT_PATH is not set."
     usage
 fi
+
+# ---------------------------
+# Print the project path and modify PYTHONPATH
+# ---------------------------
+echo "Project path: $PROJECT_PATH"
+
+# Set PYTHONPATH to include the common utilities
+export PYTHONPATH="$PROJECT_PATH/components/common/src:$PYTHONPATH"
+
+# Confirm the PYTHONPATH is updated
+echo "PYTHONPATH: $PYTHONPATH"
 
 # ---------------------------
 # Step 1: Login to Azure (Skip if already logged in)
