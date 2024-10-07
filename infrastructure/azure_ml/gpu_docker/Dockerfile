@@ -61,7 +61,7 @@ RUN $PYTHON_EXE -m pip install deepspeed mpi4py
 # RUN $PYTHON_EXE -m pip install optuna ray sigopt wandb
 
 # PyTorch
-RUN $PYTHON_EXE -m pip install onnx ninja
+RUN $PYTHON_EXE -m pip install onnx onnxruntime-genai ninja
 RUN $PYTHON_EXE -m pip install torch==${TORCH_VERSION} torchvision==${TORCHVISION_VERSION} -f https://download.pytorch.org/whl/${TORCH_CUDA_VERSION}
 
 COPY requirements.txt .
