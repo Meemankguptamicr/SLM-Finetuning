@@ -14,3 +14,4 @@ azureml-mlflow==1.57.0.post1
 onnx==1.17.0
 onnxruntime==1.19.2
 onnxruntime-genai==0.4.0
+autoawq==0.2.6
