@@ -69,7 +69,8 @@ code: ..
 environment: azureml:gpu-finetuning-environment@latest
 
 command: >-
-  python finetuning/finetune_model.py
+  ls -R .  # To print the directory structure for debugging
+  export PYTHONPATH=$PYTHONPATH:./common/src && python finetuning/finetune_model.py
   --run-name ${{inputs.run_name}}
   --train-file ${{inputs.train_file}}
   $[[--base-model-id ${{inputs.base_model_id}}]]
