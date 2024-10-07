@@ -3,6 +3,8 @@
 # Exit immediately if a command exits with a non-zero status.
 set -e
 
+export PYTHONPATH="$PROJECT_PATH/components/common/src:$PYTHONPATH"
+
 # ---------------------------
 # Function to display usage
 # ---------------------------
