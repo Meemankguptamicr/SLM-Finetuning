@@ -64,7 +64,7 @@ outputs:
   model_dir:
     type: uri_folder
 
-code: ../components
+code: ..
 
 environment: azureml:gpu-finetuning-environment@latest
 
