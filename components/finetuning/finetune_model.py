@@ -23,8 +23,7 @@ def parse_args():
     parser.add_argument("--run-name", type=str, help="Name of the fine-tuning run", required=True)
     parser.add_argument("--train-file", type=str, help="File path pre-processed training data", required=True)
     parser.add_argument("--base-model-id", type=str, help="Base model id in HuggingFace Hub", default=4096)
-    parser.add_argument("--finetune-approach", type=str, help="Choose the approach for fine-tuning a model ('sfttrainer' or 'unsloth')", 
-                        default="sfttrainer", choices=["sfttrainer", "unsloth"])
+    parser.add_argument("--finetune-approach", type=str, help="Choose the approach for fine-tuning a model ('sfttrainer' or 'unsloth')", default="sfttrainer", choices=["sfttrainer", "unsloth"])
     parser.add_argument("--quantization-aware-training", type=bool, help="Enable quantization-aware training", default=True)
     parser.add_argument("--flash-attention", type=bool, help="Enable Flash Attention 2", default=True)
     parser.add_argument("--peft-approach", type=str, help="Choose the PEFT approach ('qlora', 'dora', or 'lora').", choices=["qlora", "dora", "lora"], default="lora")
