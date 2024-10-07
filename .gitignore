@@ -1,4 +1,4 @@
-models/
+notebooks/models/
 *.safetensors
 *.onnx
 *.onnx.data
