@@ -24,7 +24,7 @@ def parse_args():
     parser.add_argument("--train-file", type=str, help="File path pre-processed training data", required=True)
     parser.add_argument("--base-model-id", type=str, help="Base model id in HuggingFace Hub", default=4096)
     parser.add_argument("--finetune-approach", type=str, help="Choose the approach for fine-tuning a model ('sfttrainer' or 'unsloth')", default="sfttrainer", choices=["sfttrainer", "unsloth"])
-    parser.add_argument("--quantization-aware-training", type=bool, help="Enable quantization-aware training", default=True)
+    parser.add_argument("--quantization-mode", type=bool, help="Enable quantization-aware training in 4-bits or 8-bits", default=True)
     parser.add_argument("--flash-attention", type=bool, help="Enable Flash Attention 2", default=True)
     parser.add_argument("--peft-approach", type=str, help="Choose the PEFT approach ('qlora', 'dora', or 'lora').", choices=["qlora", "dora", "lora"], default="lora")
     parser.add_argument("--optimizer", type=str, help="Optimizer for fine-tuning ('adamw_8bit' or 'adamw_torch_fused')", choices=["adamw_8bit", "adamw_torch_fused"], default="adamw_torch_fused")
@@ -46,7 +46,7 @@ def parse_args():
 
 # Model and tokenizer loading function
 def load_model_tokenizer(args):
-    return load_with_transformers(args.base_model_id, args.quantization_aware_training, args.flash_attention, dtype=torch.bfloat16)
+    return load_with_transformers(args.base_model_id, args.quantization_mode, args.flash_attention, dtype=torch.bfloat16)
 
 
 # Data loading function
@@ -117,34 +117,34 @@ def train_model(args, model, tokenizer, train_dataset, val_dataset):
         trainer.remove_callback(MLflowCallback)
 
     # GPU information and training output handling
-    start_gpu_memory, max_memory = get_gpu_info()
+    start_used_gpu_memory, total_gpu_memory = get_gpu_info()
     training_start = time.time()
     
     training_output = trainer.train()
     
-    handle_training_output(trainer, tokenizer, training_output, args.model_dir, args.base_model_id, training_start, start_gpu_memory, max_memory, args.use_mlflow)
+    handle_training_output(trainer, tokenizer, training_output, training_start, start_used_gpu_memory, total_gpu_memory, args)
 
 
 # Function to handle GPU information logging
 def get_gpu_info():
     # Use torch.cuda.memory_reserved to get the current memory usage before training
-    start_gpu_memory = round(torch.cuda.memory_reserved(0) / 1024 / 1024 / 1024, 3)
+    start_used_gpu_memory = round(torch.cuda.memory_reserved(0) / 1024 / 1024 / 1024, 3)
     # Use total_memory for reference to the GPU's capacity, if needed
-    total_memory = round(torch.cuda.get_device_properties(0).total_memory / 1024 / 1024 / 1024, 3)
-    return start_gpu_memory, total_memory
+    total_gpu_memory = round(torch.cuda.get_device_properties(0).total_memory / 1024 / 1024 / 1024, 3)
+    return start_used_gpu_memory, total_gpu_memory
 
 
 # Function to handle training output and metrics logging
-def handle_training_output(trainer, tokenizer, training_output, model_dir, base_model_id, training_start, start_gpu_memory, max_memory, use_mlflow):
+def handle_training_output(trainer, tokenizer, training_output, training_start, start_used_gpu_memory, total_gpu_memory, args):
     train_runtime = time.time() - training_start
     train_runtime_minutes = round(train_runtime/60, 2)
 
-    used_memory = round(torch.cuda.max_memory_reserved() / 1024 / 1024 / 1024, 3)
-    used_memory_for_training = round(used_memory - start_gpu_memory, 3)
-    used_percentage = round(used_memory         /max_memory*100, 3)
-    training_percentage = round(used_memory_for_training/max_memory*100, 3)
+    end_used_gpu_memory = round(torch.cuda.max_memory_reserved() / 1024 / 1024 / 1024, 3)
+    used_gpu_memory_for_training = round(end_used_gpu_memory - start_used_gpu_memory, 3)
+    used_percentage = round(end_used_gpu_memory         /total_gpu_memory*100, 3)
+    training_percentage = round(used_gpu_memory_for_training/total_gpu_memory*100, 3)
 
-    train_loss = training_output.metrics.get('train_loss', None)
+    train_loss = training_output.metrics.get("train_loss", None)
     print(f"Training Loss: {train_loss}")
 
     eval_loss = None
@@ -153,21 +153,23 @@ def handle_training_output(trainer, tokenizer, training_output, model_dir, base_
             eval_loss = log['eval_loss']
     print(f"Validation Loss: {eval_loss}" if eval_loss else "Validation loss not found.")
 
-    if use_mlflow:
+    if args.use_mlflow:
+        mlflow.log_param("base-model-id", args.base_model_id)
+        mlflow.log_param("peft-approach", args.peft_approach)
+        mlflow.log_param("quantization_mode", args.quantization_mode)
         mlflow.log_metric("training-loss", train_loss)
         mlflow.log_metric("eval-loss", eval_loss)
         mlflow.log_metric("train-runtime-minutes", train_runtime_minutes)
-        mlflow.log_metric("used-memory", used_memory)
-        mlflow.log_metric("used-memory-for-training", used_memory_for_training)
-        mlflow.log_metric("used-percentage", used_percentage)
-        mlflow.log_metric("training-percentage", training_percentage)
+        mlflow.log_metric("used-gpu_memory-for-training", used_gpu_memory_for_training)
+        mlflow.log_metric("used-gpu-memory-percentage", used_percentage)
+        mlflow.log_metric("used-gpu_memory-for-training-percentage", training_percentage)
     
-    print(f"Saving model to {model_dir}")
-    trainer.save_model(model_dir)
-    tokenizer.save_pretrained(model_dir)
+    print(f"Saving model to {args.model_dir}")
+    trainer.save_model(args.model_dir)
+    tokenizer.save_pretrained(args.model_dir)
 
     # Merge model
-    merge_and_save_model(base_model_id, model_dir, DEVICE)
+    merge_and_save_model(args.base_model_id, args.model_dir, DEVICE)
 
 
 # Main function

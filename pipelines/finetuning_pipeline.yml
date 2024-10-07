@@ -17,7 +17,7 @@ inputs:
     type: uri_file
     path: "../data/processed/raft_sample_data-files/raft_sample_data-ft.train.jsonl"
   base_model_id: microsoft/Phi-3-mini-128k-instruct
-  quantization_aware_training: true
+  quantization_mode: "4bit"
   flash_attention: true
   peft_approach: dora
   finetune_approach: sfttrainer
@@ -47,7 +47,7 @@ jobs:
       run_name: ${{parent.inputs.run_name}}
       train_file: ${{parent.inputs.train_file}}
       base_model_id: ${{parent.inputs.base_model_id}}
-      quantization_aware_training: ${{parent.inputs.quantization_aware_training}}
+      quantization_mode: ${{parent.inputs.quantization_mode}}
       flash_attention: ${{parent.inputs.flash_attention}}
       peft_approach: ${{parent.inputs.peft_approach}}
       finetune_approach: ${{parent.inputs.finetune_approach}}

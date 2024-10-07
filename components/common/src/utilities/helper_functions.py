@@ -3,20 +3,31 @@ import torch
 from transformers import AutoModelForCausalLM, AutoTokenizer, BitsAndBytesConfig
 from peft import PeftModelForCausalLM
 
-def load_with_transformers(base_model_id, quantization_aware_training=True, flash_attention=True, dtype=torch.bfloat16):
+def load_with_transformers(base_model_id, quantization_mode="4bit", flash_attention=True, dtype=torch.bfloat16):
     
     # Configure quantization-aware training if enabled
-    if quantization_aware_training:
+    if quantization_mode == "4bit":
         bnb_config = BitsAndBytesConfig(
-            load_in_4bit=True,
-            bnb_4bit_use_double_quant=True,
-            bnb_4bit_quant_type="nf4",
-            bnb_4bit_compute_dtype=torch.float16
+            load_in_4bit=True,                      # Store model weights in 4 bits
+            bnb_4bit_use_double_quant=True,         # Use double quantization for 4-bit weights
+            bnb_4bit_quant_type="nf4",              # Use NF4 quantization for 4-bit weights
+            bnb_4bit_compute_dtype=torch.bfloat16   # Dequantize 4-bit weights into higher precision for computations (forward and backward passes)
         )
+    elif quantization_mode == "8bit":
+        bnb_config = BitsAndBytesConfig(
+            load_in_8bit=True,                      # Store model weights in 8 bits
+            bnb_8bit_use_double_quant=True,         # Use double quantization for 8-bit weights
+            bnb_8bit_quant_type="nf8",              # Use NF8 quantization for 8-bit weights
+            bnb_8bit_compute_dtype=torch.bfloat16   # Dequantize 8-bit weights into higher precision for computations (forward and backward passes)
+        )
+    else:
+        raise ValueError("Unsupported quantization mode. Use '4bit' or '8bit'.")
+    
+    if quantization_mode != None:
         model = AutoModelForCausalLM.from_pretrained(
             base_model_id,
             quantization_config=bnb_config,
-            torch_dtype=dtype,
+            torch_dtype=dtype,                      # torch_dtype controls the precision for non-quantized parts of the model, such as activations, intermediate results, and potentially non-quantized layers
             device_map="auto",
             trust_remote_code=True,
             attn_implementation="flash_attention_2" if flash_attention else None
@@ -24,7 +35,7 @@ def load_with_transformers(base_model_id, quantization_aware_training=True, flas
     else:
         model = AutoModelForCausalLM.from_pretrained(
             base_model_id,
-            torch_dtype=dtype,
+            torch_dtype=dtype,                      # Use the precision specified by torch_dtype in the entire model
             device_map="auto",
             trust_remote_code=True,
             attn_implementation="flash_attention_2" if flash_attention else None
