@@ -155,8 +155,10 @@ def handle_training_output(trainer, tokenizer, training_output, training_start, 
 
     if args.use_mlflow:
         mlflow.log_param("base-model-id", args.base_model_id)
+        mlflow.log_param("max-seq-length", args.max_seq_length)
         mlflow.log_param("peft-approach", args.peft_approach)
-        mlflow.log_param("quantization_mode", args.quantization_mode)
+        mlflow.log_param("quantization-mode", args.quantization_mode)
+        mlflow.log_param("train-batch-size", args.per_device_train_batch_size)
         mlflow.log_param("optimizer", args.optimizer)
         mlflow.log_metric("training-loss", train_loss)
         mlflow.log_metric("eval-loss", eval_loss)
