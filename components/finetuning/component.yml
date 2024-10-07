@@ -69,7 +69,7 @@ code: .
 environment: azureml:gpu-finetuning-environment@latest
 
 command: >-
-  python -m torch.distributed.run finetune_model.py
+  python finetune_model.py
   --run-name ${{inputs.run_name}}
   --train-file ${{inputs.train_file}}
   $[[--base-model-id ${{inputs.base_model_id}}]]
