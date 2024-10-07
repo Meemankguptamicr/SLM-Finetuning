@@ -58,17 +58,6 @@ if [[ -z "$PROJECT_PATH" ]]; then
 fi
 
 # ---------------------------
-# Print the project path and modify PYTHONPATH
-# ---------------------------
-echo "Project path: $PROJECT_PATH"
-
-# Set PYTHONPATH to include the common utilities
-export PYTHONPATH="$PROJECT_PATH/components/common/src:$PYTHONPATH"
-
-# Confirm the PYTHONPATH is updated
-echo "PYTHONPATH: $PYTHONPATH"
-
-# ---------------------------
 # Step 1: Login to Azure (Skip if already logged in)
 # ---------------------------
 if ! az account show > /dev/null 2>&1; then
