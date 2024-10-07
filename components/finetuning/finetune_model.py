@@ -24,7 +24,7 @@ def parse_args():
     parser.add_argument("--train-file", type=str, help="File path pre-processed training data", required=True)
     parser.add_argument("--base-model-id", type=str, help="Base model id in HuggingFace Hub", default=4096)
     parser.add_argument("--finetune-approach", type=str, help="Choose the approach for fine-tuning a model ('sfttrainer' or 'unsloth')", default="sfttrainer", choices=["sfttrainer", "unsloth"])
-    parser.add_argument("--quantization-mode", type=bool, help="Enable quantization-aware training in 4-bits or 8-bits", default=True)
+    parser.add_argument("--quantization-mode", type=str, help="Enable quantization-aware training in 4-bits or 8-bits", default="4bit", choices=["4bit", "8bit","none"])
     parser.add_argument("--flash-attention", type=bool, help="Enable Flash Attention 2", default=True)
     parser.add_argument("--peft-approach", type=str, help="Choose the PEFT approach ('qlora', 'dora', or 'lora').", choices=["qlora", "dora", "lora"], default="lora")
     parser.add_argument("--optimizer", type=str, help="Optimizer for fine-tuning ('adamw_8bit' or 'adamw_torch_fused')", choices=["adamw_8bit", "adamw_torch_fused"], default="adamw_torch_fused")

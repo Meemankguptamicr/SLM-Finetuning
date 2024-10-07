@@ -6,6 +6,7 @@ from peft import PeftModelForCausalLM
 def load_with_transformers(base_model_id, quantization_mode="4bit", flash_attention=True, dtype=torch.bfloat16):
     
     # Configure quantization-aware training if enabled
+    bnb_config = None
     if quantization_mode == "4bit":
         bnb_config = BitsAndBytesConfig(
             load_in_4bit=True,                      # Store model weights in 4 bits
@@ -21,9 +22,10 @@ def load_with_transformers(base_model_id, quantization_mode="4bit", flash_attent
             bnb_8bit_compute_dtype=torch.bfloat16   # Dequantize 8-bit weights into higher precision for computations (forward and backward passes)
         )
     else:
-        raise ValueError("Unsupported quantization mode. Use '4bit' or '8bit'.")
+        print("Quantization disabled.")
     
-    if quantization_mode != None:
+    if bnb_config != None:
+        print("Loading the model with quantization-aware training enabled.")
         model = AutoModelForCausalLM.from_pretrained(
             base_model_id,
             quantization_config=bnb_config,
@@ -33,6 +35,7 @@ def load_with_transformers(base_model_id, quantization_mode="4bit", flash_attent
             attn_implementation="flash_attention_2" if flash_attention else None
         )
     else:
+        print("Loading the model with quantization-aware training disabled.")
         model = AutoModelForCausalLM.from_pretrained(
             base_model_id,
             torch_dtype=dtype,                      # Use the precision specified by torch_dtype in the entire model
