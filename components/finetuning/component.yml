@@ -59,6 +59,9 @@ inputs:
   eval_steps:
     type: integer
     optional: true
+  use_mlflow:
+    type: boolean
+    optional: true
 
 outputs:
   model_dir:
@@ -89,4 +92,5 @@ command: >-
   $[[--logging-steps ${{inputs.logging_steps}}]]
   $[[--save-steps ${{inputs.save_steps}}]]
   $[[--eval-steps ${{inputs.eval_steps}}]]
+  $[[--use-mlflow ${{inputs.use_mlflow}}]]
   --model-dir ${{outputs.model_dir}}

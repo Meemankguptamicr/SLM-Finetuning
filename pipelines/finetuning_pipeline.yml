@@ -32,6 +32,7 @@ inputs:
   logging_steps: 10
   save_steps: 10
   eval_steps: 10
+  use_mlflow: true
 
 outputs:
   model_dir:
@@ -61,5 +62,6 @@ jobs:
       logging_steps: ${{parent.inputs.logging_steps}}
       save_steps: ${{parent.inputs.save_steps}}
       eval_steps: ${{parent.inputs.eval_steps}}
+      use_mlflow: ${{parent.inputs.use_mlflow}}
     outputs:
       model_dir: ${{parent.outputs.model_dir}}

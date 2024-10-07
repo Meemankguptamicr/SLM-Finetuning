@@ -38,6 +38,7 @@ def parse_args():
     parser.add_argument("--logging-steps", type=int, help="Number of steps between each logging", default=10)
     parser.add_argument("--save-steps", type=int, help="Number of steps between each checkpoint save", default=10)
     parser.add_argument("--eval-steps", type=int, help="Number of steps between each evaluation", default=10)
+    parser.add_argument("--use-mlflow", type=bool, help="Use mlflow for logging", default=True)    
     parser.add_argument("--model-dir", type=str, help="Output directory", required=True)
     
     return parser.parse_args()
@@ -62,7 +63,8 @@ def prepare_data(train_dataset):
 
 # Training function
 def train_model(args, model, tokenizer, train_dataset, val_dataset):
-    mlflow.autolog()
+    if args.use_mlflow:
+        mlflow.autolog()
     
     peft_config = LoraConfig(
         r=256,
@@ -111,7 +113,8 @@ def train_model(args, model, tokenizer, train_dataset, val_dataset):
     trainer = SFTTrainer(model=model, tokenizer=tokenizer, train_dataset=train_dataset, eval_dataset=val_dataset, 
                          peft_config=peft_config, args=training_args)
 
-    trainer.remove_callback(MLflowCallback)
+    if args.use_mlflow:
+        trainer.remove_callback(MLflowCallback)
 
     # GPU information and training output handling
     start_gpu_memory, max_memory = get_gpu_info()
@@ -119,19 +122,20 @@ def train_model(args, model, tokenizer, train_dataset, val_dataset):
     
     training_output = trainer.train()
     
-    handle_training_output(trainer, tokenizer, training_output, args.model_dir, args.base_model_id, training_start, start_gpu_memory, max_memory)
+    handle_training_output(trainer, tokenizer, training_output, args.model_dir, args.base_model_id, training_start, start_gpu_memory, max_memory, args.use_mlflow)
 
 
 # Function to handle GPU information logging
 def get_gpu_info():
-    gpu_stats = torch.cuda.get_device_properties(0)
-    start_gpu_memory = round(gpu_stats.total_memory / 1024 / 1024 / 1024, 3)
-    max_memory = round(gpu_stats.total_memory / 1024 / 1024 / 1024, 3)
-    return start_gpu_memory, max_memory
+    # Use torch.cuda.memory_reserved to get the current memory usage before training
+    start_gpu_memory = round(torch.cuda.memory_reserved(0) / 1024 / 1024 / 1024, 3)
+    # Use total_memory for reference to the GPU's capacity, if needed
+    total_memory = round(torch.cuda.get_device_properties(0).total_memory / 1024 / 1024 / 1024, 3)
+    return start_gpu_memory, total_memory
 
 
 # Function to handle training output and metrics logging
-def handle_training_output(trainer, tokenizer, training_output, model_dir, base_model_id, training_start, start_gpu_memory, max_memory):
+def handle_training_output(trainer, tokenizer, training_output, model_dir, base_model_id, training_start, start_gpu_memory, max_memory, use_mlflow):
     train_runtime = time.time() - training_start
     train_runtime_minutes = round(train_runtime/60, 2)
 
@@ -149,13 +153,14 @@ def handle_training_output(trainer, tokenizer, training_output, model_dir, base_
             eval_loss = log['eval_loss']
     print(f"Validation Loss: {eval_loss}" if eval_loss else "Validation loss not found.")
 
-    mlflow.log_metric("training-loss", train_loss)
-    mlflow.log_metric("eval-loss", eval_loss)
-    mlflow.log_metric("train-runtime-minutes", train_runtime_minutes)
-    mlflow.log_metric("used-memory", used_memory)
-    mlflow.log_metric("used-memory-for-training", used_memory_for_training)
-    mlflow.log_metric("used-percentage", used_percentage)
-    mlflow.log_metric("training-percentage", training_percentage)
+    if use_mlflow:
+        mlflow.log_metric("training-loss", train_loss)
+        mlflow.log_metric("eval-loss", eval_loss)
+        mlflow.log_metric("train-runtime-minutes", train_runtime_minutes)
+        mlflow.log_metric("used-memory", used_memory)
+        mlflow.log_metric("used-memory-for-training", used_memory_for_training)
+        mlflow.log_metric("used-percentage", used_percentage)
+        mlflow.log_metric("training-percentage", training_percentage)
     
     print(f"Saving model to {model_dir}")
     trainer.save_model(model_dir)
