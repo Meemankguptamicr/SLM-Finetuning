@@ -3,7 +3,11 @@
 # Exit immediately if a command exits with a non-zero status.
 set -e
 
+echo "Project path: $PROJECT_PATH"
+
 export PYTHONPATH="$PROJECT_PATH/components/common/src:$PYTHONPATH"
+
+echo "Project path after adding components/common/src: $PROJECT_PATH"
 
 # ---------------------------
 # Function to display usage
