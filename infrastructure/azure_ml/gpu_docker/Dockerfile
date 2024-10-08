@@ -24,8 +24,8 @@ ENV DEBIAN_FRONTEND noninteractive
 # Versions
 ARG PYTHON_VERSION=3.10
 ARG TORCH_CUDA_VERSION=cu118
-ARG TORCH_VERSION=2.4.0
-ARG TORCHVISION_VERSION=0.19.0
+ARG TORCH_VERSION=2.0.0
+ARG TORCHVISION_VERSION=0.15.1
 
 # Bash shell
 RUN chsh -s /bin/bash
@@ -60,8 +60,9 @@ RUN $PYTHON_EXE -m pip install deepspeed mpi4py
 # RUN $PYTHON_EXE -m pip install optuna ray sigopt wandb
 
 # PyTorch
-RUN $PYTHON_EXE -m pip install onnx onnxruntime-genai ninja
+RUN $PYTHON_EXE -m pip install onnx onnxruntime-genai ninja packaging
 RUN $PYTHON_EXE -m pip install torch==${TORCH_VERSION} torchvision==${TORCHVISION_VERSION} -f https://download.pytorch.org/whl/${TORCH_CUDA_VERSION}
+RUN $PYTHON_EXE -m pip install flash-attn==2.6.3 --no-build-isolation
 
 COPY requirements.txt .
 RUN $PYTHON_EXE -m pip install -r requirements.txt
