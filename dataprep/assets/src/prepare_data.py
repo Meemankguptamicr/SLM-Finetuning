@@ -52,7 +52,6 @@ def get_parser_args() -> argparse.Namespace:
 
     # output paths
     main_parser.add_argument("--generated_dataset_full", required=True, help="Output path where generated dataset will be saved in full")
-    main_parser.add_argument("--generated_dataset_full_with_cot_answers", required=True, help="Output path where generated dataset will be saved in full along with cot answers")
     main_parser.add_argument("--generated_dataset_train", required=True, help="Output path where generated dataset will be saved for training")
     main_parser.add_argument("--generated_dataset_valid", required=True, help="Output path where generated dataset will be saved for validation")
 
@@ -94,7 +93,6 @@ def main():
     generated_dataset_full = Path(args.generated_dataset_full).absolute()
     generated_dataset_train = Path(args.generated_dataset_train).absolute()
     generated_dataset_valid = Path(args.generated_dataset_valid).absolute()
-    generated_dataset_full_with_cot_answers = Path(args.generated_dataset_full_with_cot_answers).absolute()
 
     # fetch deployment details from aoai workspace connection
     workspace_auth_provider = WorkspaceConnectionAuthProvider(connection_name=chat_completion_workspace_connection, endpoint_type=constants.EndpointType.Serverless)
@@ -162,7 +160,7 @@ def main():
     # save raft output to the run
     run = Run.get_context()
     logger.info("Uploading raft outputs to run")
-    run.upload_folder("raft_outputs", raft_output_dir)
+    run.upload_folder("raft_outputs", raft_output_dir.parent.as_posix())
     logger.info("Upload completed")
 
 

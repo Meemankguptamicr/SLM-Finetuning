@@ -10,6 +10,7 @@ import requests
 
 from abc import abstractmethod
 from azureml.core import Run, Workspace
+from azureml.core.run import _OfflineRun
 from raft.logconf import log_setup
 from requests.adapters import HTTPAdapter
 from urllib3 import Retry
@@ -41,8 +42,12 @@ class WorkspaceConnectionAuthProvider(AuthProvider):
     def current_workspace(self) -> Workspace:
         """Get the current workspace."""
         if self._current_workspace is None:
-            self._current_workspace = Workspace.from_config()
-            # self._current_workspace = Run.get_context().experiment.workspace
+            run: Run = Run.get_context()
+            self._current_workspace = (
+                Workspace.from_config()
+                if isinstance(run, _OfflineRun)
+                else run.experiment.workspace
+            )
         return self._current_workspace
 
     def get_auth_headers(self) -> dict:
