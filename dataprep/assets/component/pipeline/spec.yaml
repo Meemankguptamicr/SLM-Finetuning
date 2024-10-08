@@ -81,7 +81,7 @@ inputs:
     default: 1.0
 
 jobs:
-  raft_prepare_data:
+  raft_data_preprocess:
     type: command
     component: azureml:raft_data_prep:0.0.1
     compute: '${{parent.inputs.compute}}'

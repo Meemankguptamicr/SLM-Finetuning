@@ -1,5 +1,5 @@
 $schema: https://azuremlschemas.azureedge.net/latest/commandComponent.schema.json
-name: raft_data_prep
+name: raft_data_preprocess
 version: 0.0.1
 type: command
 is_deterministic: True
@@ -7,7 +7,7 @@ is_deterministic: True
 display_name: RAFT prepare data
 description: Prepare dataset for Raft
 
-environment: azureml://registries/azureml-preview-test1/environments/raft_runtime/versions/1
+environment: azureml://registries/saft-test-registry/environments/raft_runtime/versions/1
 
 inputs:
   # Deployment Inputs
