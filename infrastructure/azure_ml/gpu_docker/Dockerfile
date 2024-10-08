@@ -55,7 +55,6 @@ ENV PATH=$MINICONDA_PREFIX/bin:${PATH}
 ARG PYTHON_EXE=$MINICONDA_PREFIX/bin/python
 
 # (Optional) Intall test dependencies
-RUN $PYTHON_EXE -m pip install git+https://github.com/huggingface/transformers
 RUN $PYTHON_EXE -m pip install numpy==1.26.4 pandas==2.2.3 absl-py rouge_score seqeval scipy sacrebleu nltk scikit-learn parameterized
 RUN $PYTHON_EXE -m pip install deepspeed mpi4py
 # RUN $PYTHON_EXE -m pip install optuna ray sigopt wandb
