@@ -7,7 +7,9 @@ from trl import SFTTrainer, SFTConfig
 from peft import LoraConfig
 from datasets import load_dataset
 import argparse
-from utilities.helper_functions import load_with_transformers, merge_and_save_model
+
+from azureml.sfta.common.utilities.helper_functions import load_with_transformers, merge_and_save_model
+
 
 # Global constants
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -16,6 +18,7 @@ print("Device:", DEVICE)
 # Set environment variables to avoid tokenizers parallelism deadlocks
 os.environ["TOKENIZERS_PARALLELISM"] = "false"
 os.environ['AZUREML_ARTIFACTS_DEFAULT_TIMEOUT'] = "1200"  # Timeout for AzureML artifact upload
+
 
 # Argument parser configuration
 def parse_args():
