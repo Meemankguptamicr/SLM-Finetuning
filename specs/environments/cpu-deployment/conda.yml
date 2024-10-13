@@ -1,0 +1,10 @@
+channels:
+  - defaults
+  - anaconda
+  - conda-forge
+dependencies:
+  - pip
+  - pip:
+      - azure-ai-ml==1.21.0
+      - azure-ai-inference==1.0.0b4
+      - azure-identity==1.19.0
