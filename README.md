@@ -8,7 +8,7 @@ This repository contains the necessary scripts and infrastructure setup for fine
 
 ```bash
 git clone https://github.com/Meemankguptamicr/SLM-Finetuning
-git checkout repo-restruct
+git checkout repo-restruct2
 ```
 
 ## Setup
@@ -32,7 +32,7 @@ Create Azure ML environment:
 ENV_NAME="gpu-finetuning-environment" \
 RESOURCE_GROUP="your-resource-group" \
 WORKSPACE_NAME="your-workspace-name" \
-./infrastructure/azure_ml/create_environment.sh
+./scripts/helper/create_environment.sh
 ```
 
 Create GPU compute cluster:
@@ -45,7 +45,7 @@ MIN_NODES=0 \
 MAX_NODES=1 \
 RESOURCE_GROUP="your-resource-group" \
 WORKSPACE_NAME="your-workspace-name" \
-./infrastructure/azure_ml/create_compute_cluster.sh
+./scripts/helper/create_compute_cluster.sh
 ```
 
 Create CPU compute cluster
@@ -58,16 +58,16 @@ MIN_NODES=0 \
 MAX_NODES=1 \
 RESOURCE_GROUP="your-resource-group" \
 WORKSPACE_NAME="your-workspace-name" \
-./infrastructure/azure_ml/create_compute_cluster.sh
+./scripts/helper/create_compute_cluster.sh
 ```
 
-## Models Fine-tuning
+## End-to-end flow for RAFT
 
-Run the fine-tuning script by passing in the required parameters:
+Run the script by passing in the required parameters:
 
 ```bash
-./scripts/run_finetuning.sh \
-  --path-project "./" \
+./scripts/jobs/run_raft_flow.sh \
+  --project-path "./" \
   --subscription-id "your-subscription-id" \
   --resource-group "your-resource-group" \
   --workspace-name "your-workspace-name"
