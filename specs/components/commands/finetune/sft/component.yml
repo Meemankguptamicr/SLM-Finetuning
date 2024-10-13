@@ -1,8 +1,8 @@
 $schema: https://azuremlschemas.azureedge.net/latest/commandComponent.schema.json
 type: command
 
-name: finetune_qa_model
-display_name: Finetune Model for Question Answering task
+name: finetune_sft_model
+display_name: Finetune Model using Supervised Fine-Tuning Approach
 tags:
   author: sfta-team
 

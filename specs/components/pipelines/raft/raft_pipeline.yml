@@ -41,7 +41,7 @@ outputs:
 jobs:
   finetune_model:
     type: command
-    component: ../specs/components/finetune/sft/component.yml
+    component: ../specs/components/commands/finetune/sft/component.yml
     compute: ${{parent.inputs.finetuning_node_compute}}
     inputs:
       run_name: ${{parent.inputs.run_name}}
