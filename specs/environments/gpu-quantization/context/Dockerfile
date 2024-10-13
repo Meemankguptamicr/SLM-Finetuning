@@ -54,25 +54,12 @@ ENV PATH=$MINICONDA_PREFIX/bin:${PATH}
 
 ARG PYTHON_EXE=$MINICONDA_PREFIX/bin/python
 
-# (Optional) Intall test dependencies
-RUN $PYTHON_EXE -m pip install git+https://github.com/huggingface/transformers
-RUN $PYTHON_EXE -m pip install datasets accelerate evaluate coloredlogs absl-py rouge_score seqeval scipy sacrebleu nltk scikit-learn parameterized sentencepiece
-RUN $PYTHON_EXE -m pip install deepspeed mpi4py
-# RUN $PYTHON_EXE -m pip install optuna ray sigopt wandb
-
 # PyTorch
 RUN $PYTHON_EXE -m pip install onnx ninja
 RUN $PYTHON_EXE -m pip install torch==${TORCH_VERSION} torchvision==${TORCHVISION_VERSION} -f https://download.pytorch.org/whl/${TORCH_CUDA_VERSION}
 
 COPY requirements.txt .
 RUN $PYTHON_EXE -m pip install -r requirements.txt
-
-# ORT Module
-RUN $PYTHON_EXE -m pip install onnxruntime-training==1.17.1 -f https://download.onnxruntime.ai/onnxruntime_stable_cu118.html
-RUN $PYTHON_EXE -m pip install torch-ort
-ENV TORCH_CUDA_ARCH_LIST="5.2 6.0 6.1 7.0 7.5 8.0 8.6+PTX"
-RUN $PYTHON_EXE -m pip install --upgrade protobuf==3.20.2
-RUN $PYTHON_EXE -m torch_ort.configure
 
 # https://github.com/vllm-project/vllm/issues/1726
 RUN pip uninstall nvidia-nccl-cu12 -y

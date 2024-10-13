@@ -35,6 +35,13 @@ WORKSPACE_NAME="your-workspace-name" \
 ./scripts/helper/create_environment.sh
 ```
 
+```bash
+ENV_NAME="gpu-quantization-environment" \
+RESOURCE_GROUP="your-resource-group" \
+WORKSPACE_NAME="your-workspace-name" \
+./scripts/helper/create_environment.sh
+```
+
 Create GPU compute cluster:
 
 ```bash

@@ -1,0 +1,4 @@
+transformers>=4.40.0
+autoawq==0.2.6
+mlflow==2.16.2
+azureml-mlflow==1.57.0.post1
