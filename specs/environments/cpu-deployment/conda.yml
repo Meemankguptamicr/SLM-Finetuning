@@ -3,6 +3,7 @@ channels:
   - anaconda
   - conda-forge
 dependencies:
+  - python=3.11
   - pip
   - pip:
       - azure-ai-ml==1.21.0
