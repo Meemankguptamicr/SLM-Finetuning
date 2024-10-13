@@ -11,9 +11,9 @@ inputs:
     type: string
   pytorch_model_dir:
     type: uri_folder
-  compression_type:
+  quantization_method:
     type: string
-  quantization_mode:
+  quantization_precision:
     type: string
   use_mlflow:
     type: boolean
@@ -32,7 +32,7 @@ command: >-
   python src/run_model_compression.py
   --run-name ${{inputs.run_name}}
   --pytorch-model-dir ${{inputs.pytorch_model_dir}}
-  --compression-type ${{inputs.compression_type}}
-  --quantization-mode ${{inputs.quantization_mode}}
+  --quantization-method ${{inputs.quantization_method}}
+  --quantization-precision ${{inputs.quantization_precision}}
   $[[--use-mlflow ${{inputs.use_mlflow}}]]
   --model-dir ${{outputs.model_dir}}
