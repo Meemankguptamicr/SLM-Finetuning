@@ -1,0 +1,25 @@
+$schema: https://azuremlschemas.azureedge.net/latest/commandComponent.schema.json
+type: command
+
+name: deploy_model
+display_name: Deploy Model
+tags:
+  author: deployment-team
+
+inputs:
+  endpoint_name:
+    type: string
+  model_name:
+    type: string
+  compute_instance:
+    type: string
+
+code: ..
+
+environment: azureml:your-deployment-environment:latest
+
+command: >-
+  python deploy_model.py
+  --endpoint-name ${{inputs.endpoint_name}}
+  --model-name ${{inputs.model_name}}
+  --compute-instance ${{inputs.compute_instance}}
