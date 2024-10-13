@@ -72,7 +72,8 @@ RUN $PYTHON_EXE -m pip install onnxruntime-training==1.17.1 -f https://download.
 RUN $PYTHON_EXE -m pip install torch-ort
 ENV TORCH_CUDA_ARCH_LIST="5.2 6.0 6.1 7.0 7.5 8.0 8.6+PTX"
 RUN $PYTHON_EXE -m pip install --upgrade protobuf==4.25.5
-RUN $PYTHON_EXE -m torch_ort.configure
+RUN $PYTHON_EXE -m pip list
+#RUN $PYTHON_EXE -m torch_ort.configure
 
 # https://github.com/vllm-project/vllm/issues/1726
 RUN pip uninstall nvidia-nccl-cu12 -y
