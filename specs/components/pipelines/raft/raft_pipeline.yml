@@ -1,8 +1,8 @@
 $schema: https://azuremlschemas.azureedge.net/latest/pipelineJob.schema.json
 
 display_name: finetuning_pipeline
-experiment_name: finetuning_experiment
-description: Pipeline to fine-tune small language models
+experiment_name: raft_pipeline
+description: End-to-end pipeline to automate the finetuning and deployment of SLMs for RAFT scenario
 type: pipeline
 
 settings:
@@ -37,6 +37,8 @@ inputs:
 outputs:
   model_dir:
     type: uri_folder
+  quantized_model_dir:
+    type: uri_folder
 
 jobs:
   finetune_model:
@@ -65,3 +67,19 @@ jobs:
       use_mlflow: ${{parent.inputs.use_mlflow}}
     outputs:
       model_dir: ${{parent.outputs.model_dir}}
+
+  quantize_model:
+    type: command
+    component: ../../commands/model_compression/onnx/component.yml
+    compute: ${{parent.inputs.finetuning_node_compute}}
+    inputs:
+      model_dir: ${{parent.jobs.finetune_model.outputs.model_dir}}
+    outputs:
+      quantized_model_dir: ${{parent.outputs.quantized_model_dir}}
+  
+  deploy_model:
+    type: command
+    component: ../../commands/deployment/finetuned/managed_compute/component.yml
+    compute: azureml:cpu-compute
+    inputs:
+      model_dir: ${{parent.jobs.quantize_model.outputs.quantized_model_dir}}

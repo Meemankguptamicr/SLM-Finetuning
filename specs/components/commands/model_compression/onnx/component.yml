@@ -1,0 +1,38 @@
+$schema: https://azuremlschemas.azureedge.net/latest/commandComponent.schema.json
+type: command
+
+name: compress_pytorch_model
+display_name: Compress PyTorch Model
+tags:
+  author: sfta-team
+
+inputs:
+  run_name:
+    type: string
+  pytorch_model_dir:
+    type: uri_folder
+  compression_type:
+    type: string
+  quantization_mode:
+    type: string
+  use_mlflow:
+    type: boolean
+    optional: true
+
+outputs:
+  model_dir:
+    type: uri_folder
+
+code: ../../../../
+
+environment: azureml:gpu-finetuning-environment@latest
+
+command: >-
+  export PYTHONPATH=$PYTHONPATH:./azureml/sfta/common &&
+  python src/run_model_compression.py
+  --run-name ${{inputs.run_name}}
+  --pytorch-model-dir ${{inputs.pytorch_model_dir}}
+  --compression-type ${{inputs.compression_type}}
+  --quantization-mode ${{inputs.quantization_mode}}
+  $[[--use-mlflow ${{inputs.use_mlflow}}]]
+  --model-dir ${{outputs.model_dir}}

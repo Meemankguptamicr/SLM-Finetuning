@@ -72,7 +72,7 @@ code: ../../../../
 environment: azureml:gpu-finetuning-environment@latest
 
 command: >-
-  export PYTHONPATH=$PYTHONPATH:./azureml/sfta/common/src &&
+  export PYTHONPATH=$PYTHONPATH:./azureml/sfta/common &&
   python src/run_finetune.py
   --run-name ${{inputs.run_name}}
   --train-file ${{inputs.train_file}}
