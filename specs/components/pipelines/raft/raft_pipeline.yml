@@ -88,13 +88,3 @@ jobs:
       use_mlflow: ${{parent.inputs.use_mlflow}}
     outputs:
       model_dir: ${{parent.outputs.quantized_model_dir}}
-  
-  deploy_quantized_model:
-    type: command
-    component: ../../commands/deployment/finetuned/managed_compute/component.yml
-    compute: ${{parent.inputs.deployment_node_compute}}
-    inputs:
-      model_dir: ${{parent.jobs.quantize_model.outputs.model_dir}}
-      base_model_id: ${{parent.inputs.base_model_id}}
-      endpoint_type: ${{parent.inputs.endpoint_type}}
-      endpoint_name: ${{parent.inputs.endpoint_name}}
