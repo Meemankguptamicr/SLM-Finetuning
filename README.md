@@ -26,7 +26,7 @@ az login
 
 ## Environment Creation in Azure ML
 
-Create Azure ML environment:
+Create Azure ML environments:
 
 ```bash
 ENV_NAME="gpu-finetuning-environment" \
