@@ -30,6 +30,7 @@ Create Azure ML environment:
 
 ```bash
 ENV_NAME="gpu-finetuning-environment" \
+FILE="./specs/environments/gpu-finetuning/spec.yml" \
 RESOURCE_GROUP="your-resource-group" \
 WORKSPACE_NAME="your-workspace-name" \
 ./scripts/helper/create_environment.sh
@@ -37,6 +38,15 @@ WORKSPACE_NAME="your-workspace-name" \
 
 ```bash
 ENV_NAME="gpu-quantization-environment" \
+FILE="./specs/environments/gpu-quantization/spec.yml" \
+RESOURCE_GROUP="your-resource-group" \
+WORKSPACE_NAME="your-workspace-name" \
+./scripts/helper/create_environment.sh
+```
+
+```bash
+ENV_NAME="cpu-deployment-environment" \
+FILE="./specs/environments/cpu-deployment/spec.yml" \
 RESOURCE_GROUP="your-resource-group" \
 WORKSPACE_NAME="your-workspace-name" \
 ./scripts/helper/create_environment.sh
