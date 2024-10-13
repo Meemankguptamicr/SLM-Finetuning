@@ -52,13 +52,7 @@ def load_with_transformers(base_model_id, quantization_mode="4bit", flash_attent
 
 
 def merge_and_save_model(base_model_id, model_dir, device="cuda"):
-    merged_model_dir = f"{model_dir}/merged"
-    os.makedirs(merged_model_dir, exist_ok=True)
-
     base_model = AutoModelForCausalLM.from_pretrained(base_model_id).to(device)
     model_to_merge = PeftModelForCausalLM.from_pretrained(base_model, model_dir)
     merged_model = model_to_merge.merge_and_unload()
-    merged_model.save_pretrained(merged_model_dir)
-
-    tokenizer = AutoTokenizer.from_pretrained("microsoft/Phi-3-mini-128k-instruct")
-    tokenizer.save_pretrained(merged_model_dir)    
+    merged_model.save_pretrained(model_dir)   

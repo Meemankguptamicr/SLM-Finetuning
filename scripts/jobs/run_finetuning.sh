@@ -105,16 +105,16 @@ fi
 # ---------------------------
 # Step 6: Install the common utilities package
 # ---------------------------
-echo "Installing the common utilities package from components/common..."
-cd components/common
-pip install -e .
-pip show common_utils
-cd ../../
+#echo "Installing the common utilities package from src/azureml/sfta/common..."
+#cd src/azureml/sfta/common
+#pip install -e .
+#pip show common_utils
+#cd ../../
 
 # ---------------------------
 # Step 7: Run the Finetuning Pipeline
 # ---------------------------
-PIPELINE_FILE="pipelines/finetuning_pipeline.yml"
+PIPELINE_FILE="specs/components/finetuning_pipeline.yml"
 echo "Running the finetuning pipeline using $PIPELINE_FILE..."
 az ml job create --file "$PIPELINE_FILE"
 

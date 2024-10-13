@@ -15,7 +15,7 @@ inputs:
   run_name: raft_finetuning_demo
   train_file:
     type: uri_file
-    path: "../data/processed/raft_sample_data-files/raft_sample_data-ft.train.jsonl"
+    path: "../../../../data/processed/raft_sample_data-files/raft_sample_data-ft.train.jsonl"
   base_model_id: microsoft/Phi-3-mini-128k-instruct
   quantization_mode: "4bit"
   flash_attention: true
@@ -41,7 +41,7 @@ outputs:
 jobs:
   finetune_model:
     type: command
-    component: ../components/finetuning/component.yml
+    component: ../../../components/finetune/qa/component.yml
     compute: ${{parent.inputs.finetuning_node_compute}}
     inputs:
       run_name: ${{parent.inputs.run_name}}
