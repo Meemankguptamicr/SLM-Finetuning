@@ -1,4 +1,15 @@
 $schema: https://azuremlschemas.azureedge.net/latest/environment.schema.json
 name: gpu-quantization-environment
-build:
-  path: context
+image: mcr.microsoft.com/azureml/acpt-pytorch-2.2-cuda12.1:latest
+description: Environment for quantizing models
+conda_file: |
+  channels:
+    - defaults
+    - anaconda
+    - conda-forge
+  dependencies:
+    - pip
+    - pip:
+        - autoawq==0.2.6
+        - mlflow==2.16.2
+        - azureml-mlflow==1.57.0.post1

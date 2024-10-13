@@ -1,0 +1,15 @@
+$schema: https://azuremlschemas.azureedge.net/latest/environment.schema.json
+name: cpu-deployment-environment
+image: mcr.microsoft.com/azureml/minimal-py311-inference:latest
+description: Environment for deploying models on CPU instances
+conda_file: |
+  channels:
+    - defaults
+    - anaconda
+    - conda-forge
+  dependencies:
+    - pip
+    - pip:
+        - azure-ai-ml==1.21.0
+        - azure-ai-inference==1.0.0b4
+        - azure-identity==1.19.0
