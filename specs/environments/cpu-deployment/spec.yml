@@ -2,4 +2,4 @@ $schema: https://azuremlschemas.azureedge.net/latest/environment.schema.json
 name: cpu-deployment-environment
 image: mcr.microsoft.com/azureml/minimal-py311-inference:latest
 description: Environment for deploying models on CPU instances
-conda_file: conda.yaml
+conda_file: conda.yml
