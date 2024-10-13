@@ -67,12 +67,12 @@ outputs:
   model_dir:
     type: uri_folder
 
-code: ../../../../
+code: ../../../../../
 
 environment: azureml:gpu-finetuning-environment@latest
 
 command: >-
-  export PYTHONPATH=$PYTHONPATH:./azureml/sfta/common &&
+  ls &&
   python src/run_finetune.py
   --run-name ${{inputs.run_name}}
   --train-file ${{inputs.train_file}}

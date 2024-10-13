@@ -76,7 +76,11 @@ RUN $PYTHON_EXE -m pip list
 #RUN $PYTHON_EXE -m torch_ort.configure
 
 # https://github.com/vllm-project/vllm/issues/1726
-RUN pip uninstall nvidia-nccl-cu12 -y
+RUN $PYTHON_EXE -m pip uninstall nvidia-nccl-cu12 -y
+RUN $PYTHON_EXE -m pip install nvidia-nccl-cu11==2.21.5
+
+# Add an NCCL check using Python
+RUN $PYTHON_EXE -c "import torch; print('NCCL Available:', torch.cuda.nccl.is_available())"
 
 WORKDIR .
 
