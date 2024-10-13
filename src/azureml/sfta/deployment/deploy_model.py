@@ -18,4 +18,4 @@ def deploy_model(args):
     elif args.deployment_type == "base-managed":
         deploy_base_to_managed_compute(ml_client, args.registry_name, args.base_model_name, args.endpoint_name, args.deployment_name, args.instance_typ)
     elif args.deployment_type == "base-serverless":
-        deploy_to_serverless_compute()
+        deploy_to_serverless_compute(ml_client, args.registry_name, args.endpoint_name, args.base_model_name)

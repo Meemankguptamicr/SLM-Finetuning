@@ -67,7 +67,7 @@ def deploy_custom_to_online_endpoint(ml_client, endpoint_name, model, env, code_
     print(f"Traffic updated for endpoint '{endpoint_name}'.")
 
 
-def test_online_endpoint_deployment(ml_client, endpoint_name):
+def test_online_endpoint_deployment(ml_client, endpoint_name, prompt):
     endpoint = ml_client.online_endpoints.get(endpoint_name)
     scoring_uri = endpoint.scoring_uri
     if endpoint.auth_mode == "key":
@@ -82,7 +82,7 @@ def test_online_endpoint_deployment(ml_client, endpoint_name):
             "Content-Type": "application/json"
         }
     input_data = {
-        "input": "Testing prompt"
+        "input": prompt
     }
     response = requests.post(scoring_uri, headers=headers, json=input_data)
     print("Response status code:", response.status_code)
@@ -92,7 +92,8 @@ def test_online_endpoint_deployment(ml_client, endpoint_name):
 
 def deploy_base_to_managed_compute(ml_client, registry_name, base_model_name, endpoint_name, deployment_name, instance_type):
     deploy_model_online_endpoint(ml_client, registry_name, base_model_name, endpoint_name, deployment_name, instance_type)
-    test_online_endpoint_deployment(ml_client, endpoint_name)
+    prompt="Hello, how are you?"
+    test_online_endpoint_deployment(ml_client, endpoint_name, prompt)
     print("Finished Model Deployment")
 
 
@@ -126,6 +127,7 @@ def deploy_finetuned_to_managed_compute(ml_client, model_dir, model_name, endpoi
         instance_type=instance_type
     )
 
-    test_online_endpoint_deployment(ml_client, endpoint_name)
+    prompt="Hello, how are you?"
+    test_online_endpoint_deployment(ml_client, endpoint_name, prompt)
 
     print("Finished Model Deployment")
