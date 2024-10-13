@@ -1,3 +1,4 @@
+@@ -0,0 +1,82 @@
 #!/usr/bin/env python
 # coding=utf-8
 # Copyright 2023 The HuggingFace Team All rights reserved.
@@ -55,14 +56,14 @@ ENV PATH=$MINICONDA_PREFIX/bin:${PATH}
 ARG PYTHON_EXE=$MINICONDA_PREFIX/bin/python
 
 # (Optional) Intall test dependencies
-RUN $PYTHON_EXE -m pip install numpy==1.26.4 pandas==2.2.3 absl-py rouge_score seqeval scipy sacrebleu nltk scikit-learn parameterized
+RUN $PYTHON_EXE -m pip install git+https://github.com/huggingface/transformers
+RUN $PYTHON_EXE -m pip install datasets accelerate evaluate coloredlogs absl-py rouge_score seqeval scipy sacrebleu nltk scikit-learn parameterized sentencepiece
 RUN $PYTHON_EXE -m pip install deepspeed mpi4py
 # RUN $PYTHON_EXE -m pip install optuna ray sigopt wandb
 
 # PyTorch
-RUN $PYTHON_EXE -m pip install onnx onnxruntime-genai ninja packaging
+RUN $PYTHON_EXE -m pip install onnx ninja
 RUN $PYTHON_EXE -m pip install torch==${TORCH_VERSION} torchvision==${TORCHVISION_VERSION} -f https://download.pytorch.org/whl/${TORCH_CUDA_VERSION}
-RUN $PYTHON_EXE -m pip install flash-attn==2.6.3 --no-build-isolation
 
 COPY requirements.txt .
 RUN $PYTHON_EXE -m pip install -r requirements.txt
@@ -71,16 +72,11 @@ RUN $PYTHON_EXE -m pip install -r requirements.txt
 RUN $PYTHON_EXE -m pip install onnxruntime-training==1.17.1 -f https://download.onnxruntime.ai/onnxruntime_stable_cu118.html
 RUN $PYTHON_EXE -m pip install torch-ort
 ENV TORCH_CUDA_ARCH_LIST="5.2 6.0 6.1 7.0 7.5 8.0 8.6+PTX"
-RUN $PYTHON_EXE -m pip install --upgrade protobuf==4.25.5
-RUN $PYTHON_EXE -m pip list
-#RUN $PYTHON_EXE -m torch_ort.configure
+RUN $PYTHON_EXE -m pip install --upgrade protobuf==3.20.2
+RUN $PYTHON_EXE -m torch_ort.configure
 
 # https://github.com/vllm-project/vllm/issues/1726
-RUN $PYTHON_EXE -m pip uninstall nvidia-nccl-cu12 -y
-RUN $PYTHON_EXE -m pip install nvidia-nccl-cu11==2.21.5
-
-# Add an NCCL check using Python
-RUN $PYTHON_EXE -c "import torch"
+RUN pip uninstall nvidia-nccl-cu12 -y
 
 WORKDIR .
 
