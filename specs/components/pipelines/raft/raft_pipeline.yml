@@ -12,7 +12,8 @@ settings:
 
 inputs:
   finetuning_node_compute: azureml:gpu-fintetuning-compute
-  run_name: raft_finetuning_demo
+  finetuning_run_name: raft_finetuning_demo
+  compression_run_name: raft_finetuning_demo
   train_file:
     type: uri_file
     path: "../../../../data/processed/raft_sample_data-files/raft_sample_data-ft.train.jsonl"
@@ -50,7 +51,7 @@ jobs:
     component: ../../commands/finetune/sft/component.yml
     compute: ${{parent.inputs.finetuning_node_compute}}
     inputs:
-      run_name: ${{parent.inputs.run_name}}
+      run_name: ${{parent.inputs.finetuning_run_name}}
       train_file: ${{parent.inputs.train_file}}
       base_model_id: ${{parent.inputs.base_model_id}}
       quantization_mode: ${{parent.inputs.quantization_mode}}
@@ -77,6 +78,7 @@ jobs:
     component: ../../commands/model_compression/onnx/component.yml
     compute: ${{parent.inputs.finetuning_node_compute}}
     inputs:
+      run_name: ${{parent.inputs.compression_run_name}}
       pytorch_model_dir: ${{parent.jobs.finetune_model.outputs.model_dir}}
       quantization_method: ${{parent.inputs.quantization_method}}
       quantization_precision: ${{parent.inputs.quantization_precision}}
