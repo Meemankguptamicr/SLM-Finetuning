@@ -15,7 +15,7 @@ os.environ['AZUREML_ARTIFACTS_DEFAULT_TIMEOUT'] = "1200"  # Timeout for AzureML 
 # Argument parser configuration
 def parse_args():
     parser = argparse.ArgumentParser(description="Argument parser for compressing a model.")
-    parser.add_argument("--run-name", type=str, help="Name of the compression run", required=True)
+    parser.add_argument("--run-name", type=str, help="Name of the model compression run", required=True)
     parser.add_argument("--pytorch-model-dir", type=str, help="Path to the PyTorch model that should be compressed", required=True)
     parser.add_argument("--quantization-method", type=str, help="Type of quantization method, e.g., 'AWQ', 'PTQ', 'QAT'", required=True, choices=["awq"])
     parser.add_argument("--quantization-precision", type=str, help="Quantization precision, e.g., int4, int8, fp16", required=True, choices=["int4", "int8", "fp16"])

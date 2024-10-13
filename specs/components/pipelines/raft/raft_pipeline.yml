@@ -1,8 +1,8 @@
 $schema: https://azuremlschemas.azureedge.net/latest/pipelineJob.schema.json
 
-display_name: finetuning_pipeline
-experiment_name: raft_pipeline
-description: End-to-end pipeline to automate the finetuning and deployment of SLMs for RAFT scenario
+display_name: raft_pipeline
+experiment_name: raft_experiment
+description: End-to-end pipeline for SLM-based RAFT scenario
 type: pipeline
 
 settings:
@@ -34,9 +34,10 @@ inputs:
   save_steps: 10
   eval_steps: 10
   use_mlflow: true
-  quantization_method: "awq"
+  quantization_method: awq
   quantization_precision: int4
-  endpoint_type: "online"
+  endpoint_type: online
+  endpoint_name: raft-phi3-awq-int4
   
 
 outputs:
@@ -85,3 +86,13 @@ jobs:
       use_mlflow: ${{parent.inputs.use_mlflow}}
     outputs:
       model_dir: ${{parent.outputs.quantized_model_dir}}
+  
+  deploy_quantized_model:
+    type: command
+    component: ../../commands/deployment/finetuned/managed_compute/component.yml
+    compute: azureml:cpu-compute
+    inputs:
+      model_dir: ${{parent.jobs.quantize_model.outputs.model_dir}}
+      base_model_id: ${{parent.inputs.base_model_id}}
+      endpoint_type: ${{parent.inputs.endpoint_type}}
+      endpoint_name: ${{parent.inputs.endpoint_name}}

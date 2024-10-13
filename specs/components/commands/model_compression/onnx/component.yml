@@ -23,12 +23,11 @@ outputs:
   model_dir:
     type: uri_folder
 
-code: ../../../../
+code: ../../../../../
 
 environment: azureml:gpu-finetuning-environment@latest
 
 command: >-
-  export PYTHONPATH=$PYTHONPATH:./azureml/sfta/common &&
   python src/run_model_compression.py
   --run-name ${{inputs.run_name}}
   --pytorch-model-dir ${{inputs.pytorch_model_dir}}
