@@ -64,6 +64,8 @@ RUN $PYTHON_EXE -m pip install deepspeed mpi4py
 RUN $PYTHON_EXE -m pip install onnx ninja
 RUN $PYTHON_EXE -m pip install torch==${TORCH_VERSION} torchvision==${TORCHVISION_VERSION} -f https://download.pytorch.org/whl/${TORCH_CUDA_VERSION}
 
+RUN $PYTHON_EXE -m pip install flash-attn==2.6.3 --no-build-isolation
+
 COPY requirements.txt .
 RUN $PYTHON_EXE -m pip install -r requirements.txt
 
