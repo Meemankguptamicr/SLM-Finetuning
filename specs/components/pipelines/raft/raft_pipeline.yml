@@ -25,7 +25,7 @@ inputs:
   peft_approach: dora
   finetune_approach: sfttrainer
   optimizer: adamw_torch_fused
-  max_seq_length: 4096
+  max_seq_length: 2048
   num_train_epochs: 1
   learning_rate: 0.0001
   per_device_train_batch_size: 3

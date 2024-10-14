@@ -32,15 +32,16 @@ def train_model(args, model, tokenizer, train_dataset, val_dataset, device="cuda
         mlflow.autolog()
     
     peft_config = LoraConfig(
-        r=256,
-        lora_alpha=128,
+        r=16, #256,
+        lora_alpha=32, #128,
         lora_dropout=0.05,
         bias="none",
         target_modules="all-linear",
         task_type="CAUSAL_LM",
         use_dora=True if args.peft_approach=="dora" else False
     )
-
+    
+    # SFTConfig relies on accelerate to prepare the model, the optimizer and the dataset + training setup
     training_args = SFTConfig(
         output_dir="outputs",                                               # directory to save and repository id
         run_name=args.run_name,                                             # name of the run
@@ -132,6 +133,7 @@ def handle_training_output(trainer, tokenizer, training_output, training_start, 
         mlflow.log_metric("used-gpu-memory-percentage", used_percentage)
         mlflow.log_metric("used-gpu_memory-for-training-percentage", training_percentage)
     
-    print(f"Saving tokenizer and model to {args.model_dir}")
+    print(f"Saving the tokenizer to {args.model_dir}")
     tokenizer.save_pretrained(args.model_dir)
+    print(f"Saving the merged model to {args.model_dir}")
     merge_and_save_model(args.base_model_id, args.model_dir, device)

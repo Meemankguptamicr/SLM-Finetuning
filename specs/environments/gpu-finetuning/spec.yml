@@ -1,4 +1,5 @@
 $schema: https://azuremlschemas.azureedge.net/latest/environment.schema.json
 name: gpu-finetuning-environment
-build:
-  path: context
+image: mcr.microsoft.com/azureml/curated/acft-hf-nlp-gpu:latest
+description: Environment for fine-tuning small language models
+conda_file: conda.yml
