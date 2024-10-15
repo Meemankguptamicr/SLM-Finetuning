@@ -64,7 +64,7 @@ def main():
         model, tokenizer = load_model_tokenizer(args)
         train_dataset = load_data(args.train_file)
         train_dataset, val_dataset = prepare_data(train_dataset)
-        target_modules = args.target_modules.split(",") if "," in args.low_rank_target_modules else args.low_rank_target_modules
+        target_modules = args.low_rank_target_modules.split(",") if "," in args.low_rank_target_modules else args.low_rank_target_modules
         train_model(args, model, tokenizer, train_dataset, val_dataset, target_modules, DEVICE)
     else:
         raise ValueError("Invalid finetuning approach. Currently only 'sfttrainer' is supported.")
