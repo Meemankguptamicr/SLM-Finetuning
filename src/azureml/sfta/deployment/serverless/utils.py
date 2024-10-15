@@ -34,36 +34,39 @@ def deploy_model(ml_client, model_id, endpoint_name):
     print(endpoint_keys.primary_key)
 
 
-def test_deployment():
-    client = ChatCompletionsClient(
-        endpoint=os.environ["AZURE_INFERENCE_ENDPOINT"],
-        credential=DefaultAzureCredential(),
-    )
-    model_info = client.get_model_info()
-    print("Model name:", model_info.model_name)
-    print("Model type:", model_info.model_type)
-    print("Model provider name:", model_info.model_provider_name)
+def test_deployment(nlu_task="chat-completion"):
+    if nlu_task == "chat-completion":
+        client = ChatCompletionsClient(
+            endpoint=os.environ["AZURE_INFERENCE_ENDPOINT"],
+            credential=DefaultAzureCredential(),
+        )
+        model_info = client.get_model_info()
+        print("Model name:", model_info.model_name)
+        print("Model type:", model_info.model_type)
+        print("Model provider name:", model_info.model_provider_name)
 
-    response = client.complete(
-        messages=[
-            SystemMessage(content="You are a helpful assistant."),
-            UserMessage(content="How many languages are in the world?"),
-        ],
-    )
+        response = client.complete(
+            messages=[
+                SystemMessage(content="You are a helpful assistant."),
+                UserMessage(content="How many languages are in the world?"),
+            ],
+        )
 
-    print("Response:", response.choices[0].message.content)
-    print("Model:", response.model)
-    print("Usage:")
-    print("\tPrompt tokens:", response.usage.prompt_tokens)
-    print("\tTotal tokens:", response.usage.total_tokens)
-    print("\tCompletion tokens:", response.usage.completion_tokens)
+        print("Response:", response.choices[0].message.content)
+        print("Model:", response.model)
+        print("Usage:")
+        print("\tPrompt tokens:", response.usage.prompt_tokens)
+        print("\tTotal tokens:", response.usage.total_tokens)
+        print("\tCompletion tokens:", response.usage.completion_tokens)
+    else:
+        ValueError(f"Unsupported NLU task: {nlu_task}")
 
 
 
-def deploy_to_serverless_compute(ml_client, registry_name, endpoint_name, base_model_name="Phi-3-mini-4k-instruct"):
+def deploy_to_serverless_compute(ml_client, registry_name, endpoint_name, base_model_name="Phi-3-mini-4k-instruct", nlu_task="chat-completion"):
     model_id = f"azureml://registries/{registry_name}/models/{base_model_name}/labels/latest"
     # for non-Microsoft models
     # create_marketplace_subscription(ml_client, model_id, base_model_name)
     deploy_model(ml_client, model_id, endpoint_name)
-    test_deployment()
+    test_deployment(nlu_task)
     print("Finished Model Deployment")

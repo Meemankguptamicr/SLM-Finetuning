@@ -21,6 +21,11 @@ def parse_args():
     parser.add_argument("--registry-name", type=str, help="Name of the registry", default="azureml")
     parser.add_argument("--base-model-name", type=str, help="Name of the base model", default="Phi-3-mini-4k-instruct")
 
+    # Arguments specific to base-managed and finetuned-managed deployments
+    parser.add_argument("--instance_count", type=int, help="Number of instances", default=1)
+    parser.add_argument("--auth_mode", type=str, help="Authentication mode", default="key")
+    parser.add_argument("--nlu_task", type=str, help="NLU task", default="chat-completion")
+
 
 def enforce_required_args(args, required_args_list):
     missing_args = []
