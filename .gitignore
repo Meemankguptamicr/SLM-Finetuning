@@ -3,6 +3,10 @@ notebooks/models/
 *.onnx
 *.onnx.data
 
+.amlignore
+.amlignore.amltmp
+.ipynb
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
