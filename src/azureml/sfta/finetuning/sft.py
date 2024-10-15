@@ -27,16 +27,16 @@ def prepare_data(train_dataset):
 
 
 # Training function
-def train_model(args, model, tokenizer, train_dataset, val_dataset, device="cuda"):
+def train_model(args, model, tokenizer, train_dataset, val_dataset, target_modules="all-linear", device="cuda"):
     if args.use_mlflow:
         mlflow.autolog()
     
     peft_config = LoraConfig(
-        r=16, #256,
-        lora_alpha=32, #128,
-        lora_dropout=0.05,
+        r=args.low_rank_r, #16, 256,
+        lora_alpha=args.low_rank_alpha, #32, 128,
+        lora_dropout=args.low_rank_dropout, #0.05,
+        target_modules=target_modules, #"all-linear",
         bias="none",
-        target_modules="all-linear",
         task_type="CAUSAL_LM",
         use_dora=True if args.peft_approach=="dora" else False
     )

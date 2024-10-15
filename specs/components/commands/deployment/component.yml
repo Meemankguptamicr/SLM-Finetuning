@@ -1,0 +1,98 @@
+$schema: https://azuremlschemas.azureedge.net/latest/commandComponent.schema.json
+type: command
+
+name: deploy_sft_model
+display_name: Deploy a Model
+tags:
+  author: sfta-team
+
+
+inputs:
+  run_name:
+    type: string
+    description: "Name of the deployment run"
+    optional: false
+  endpoint_name:
+    type: string
+    description: "Name of the endpoint"
+    optional: false
+  deployment_type:
+    type: string
+    description: "Type of deployment"
+    optional: false
+    enum:
+      - finetuned-managed
+      - base-serverless
+      - base-managed
+  model_dir:
+    type: string
+    description: "Path to the finetuned model"
+    optional: true
+  base_model_name:
+    type: string
+    description: "Name of the base model (for tagging or selection)"
+    default: "Phi-3-mini-4k-instruct"
+    optional: true
+  endpoint_type:
+    type: string
+    description: "Type of the endpoint ('batch' or 'online')"
+    optional: true
+    enum:
+      - batch
+      - online
+  deployment_name:
+    type: string
+    description: "Name of the deployment"
+    optional: true
+  vm_type:
+    type: string
+    description: "VM type ('cpu' or 'gpu')"
+    optional: true
+  instance_type:
+    type: string
+    description: "Instance compute type"
+    optional: true
+  instance_count:
+    type: integer
+    description: "Number of instances"
+    default: 1
+    optional: true
+  registry_name:
+    type: string
+    description: "Name of the registry"
+    default: "azureml"
+    optional: true
+  auth_mode:
+    type: string
+    description: "Authentication mode"
+    default: "key"
+    optional: true
+    enum:
+      - key
+  nlu_task:
+    type: string
+    description: "NLU task"
+    default: "chat-completion"
+    optional: true
+    enum:
+      - chat-completion
+
+code: ../../../../../
+
+environment: azureml:cpu-deployment-environment@latest
+
+command: >-
+  python src/deploy_model.py
+  --run-name ${{inputs.run_name}}
+  --endpoint-name ${{inputs.endpoint_name}}
+  --deployment-type ${{inputs.deployment_type}}
+  $[[--model-dir ${{inputs.model_dir}}]]
+  $[[--base-model-name ${{inputs.base_model_name}}]]
+  $[[--endpoint-type ${{inputs.endpoint_type}}]]
+  $[[--deployment-name ${{inputs.deployment_name}}]]
+  $[[--vm-type ${{inputs.vm_type}}]]
+  $[[--instance-type ${{inputs.instance_type}}]]
+  $[[--registry-name ${{inputs.registry_name}}]]
+  $[[--instance-count ${{inputs.instance_count}}]]
+  $[[--auth-mode ${{inputs.auth_mode}}]]
+  $[[--nlu-task ${{inputs.nlu_task}}]]

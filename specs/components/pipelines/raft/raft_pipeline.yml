@@ -32,6 +32,10 @@ inputs:
   per_device_eval_batch_size: 3
   gradient_accumulation_steps: 6
   gradient_checkpointing: true
+  low_rank_r: 256
+  low_rank_alpha: 128
+  low_rank_dropout: 0.05
+  low_rank_target_modules: "all-linear"
   logging_steps: 10
   save_steps: 10
   eval_steps: 10
@@ -69,6 +73,10 @@ jobs:
       per_device_eval_batch_size: ${{parent.inputs.per_device_eval_batch_size}}
       gradient_accumulation_steps: ${{parent.inputs.gradient_accumulation_steps}}
       gradient_checkpointing: ${{parent.inputs.gradient_checkpointing}}
+      low_rank_r: ${{parent.inputs.low_rank_r}}
+      low_rank_alpha: ${{parent.inputs.low_rank_alpha}}
+      low_rank_dropout: ${{parent.inputs.low_rank_dropout}}
+      low_rank_target_modules: ${{parent.inputs.low_rank_target_modules}}
       logging_steps: ${{parent.inputs.logging_steps}}
       save_steps: ${{parent.inputs.save_steps}}
       eval_steps: ${{parent.inputs.eval_steps}}

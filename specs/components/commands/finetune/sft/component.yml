@@ -9,58 +9,105 @@ tags:
 inputs:
   run_name:
     type: string
+    description: "Name of the finetuning run"
   train_file:
     type: uri_file
+    description: "Path to the training file"
   base_model_id:
     type: string
+    description: "ID of the base model"
     optional: true
   quantization_mode:
     type: string
+    description: "Quantization mode"
     optional: true
+    enum:
+      - qat
+      - ptq
   flash_attention:
     type: boolean
+    description: "Whether to use flash attention"
     optional: true
   peft_approach:
     type: string
+    description: "PEFT approach"
     optional: true
+    enum:
+      - qlora
+      - dora
+      - lora
   finetune_approach:
     type: string
+    description: "Finetune approach"
     optional: true
+    enum:
+      - sfttrainer
   optimizer:
     type: string
+    description: "Optimizer for fine-tuning"
     optional: true
+    enum:
+      - adamw_8bit
+      - adamw_torch_fused
   max_seq_length:
     type: integer
+    description: "Maximum sequence length"
     optional: true
   num_train_epochs:
     type: integer
+    description: "Number of training epochs"
     optional: true
   learning_rate:
     type: number
+    description: "Learning rate"
     optional: true
   per_device_train_batch_size:
     type: integer
+    description: "Batch size per device for training"
     optional: true
   per_device_eval_batch_size:
     type: integer
+    description: "Batch size per device for evaluation"
     optional: true
   gradient_accumulation_steps:
     type: integer
+    description: "Number of gradient accumulation steps"
     optional: true
   gradient_checkpointing:
     type: boolean
+    description: "Whether to use gradient checkpointing"
+    optional: true
+  low_rank_r:
+    type: integer
+    description: "Low rank r"
+    optional: true
+  low_rank_alpha:
+    type: integer
+    description: "Low rank alpha"
+    optional: true
+  low_rank_dropout:
+    type: number
+    description: "Low rank dropout"
+    optional: true
+  low_rank_target_modules:
+    type: string
+    description: "Low rank target modules"
     optional: true
   logging_steps:
     type: integer
+    description: "Logging steps"
     optional: true
   save_steps:
     type: integer
+    description: "Save steps"
     optional: true
   eval_steps:
     type: integer
+    description: "Evaluation steps"
     optional: true
   use_mlflow:
     type: boolean
+    description: "Whether to use MLflow for logging"
     optional: true
 
 outputs:
@@ -88,6 +135,10 @@ command: >-
   $[[--per-device-eval-batch-size ${{inputs.per_device_eval_batch_size}}]]
   $[[--gradient-accumulation-steps ${{inputs.gradient_accumulation_steps}}]]
   $[[--gradient-checkpointing ${{inputs.gradient_checkpointing}}]]
+  $[[--low-rank-r ${{inputs.low_rank_r}}]]
+  $[[--low-rank-alpha ${{inputs.low_rank_alpha}}]]
+  $[[--low-rank-dropout ${{inputs.low_rank_dropout}}]]
+  $[[--low-rank-target-modules ${{inputs.low_rank_target_modules}}]]
   $[[--logging-steps ${{inputs.logging_steps}}]]
   $[[--save-steps ${{inputs.save_steps}}]]
   $[[--eval-steps ${{inputs.eval_steps}}]]
