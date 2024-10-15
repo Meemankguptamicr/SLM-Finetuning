@@ -2,7 +2,7 @@ import os
 from azure.ai.ml.entities import MarketplaceSubscription, ServerlessEndpoint
 from azure.ai.inference import ChatCompletionsClient
 from azure.ai.inference.models import SystemMessage, UserMessage
-from azure.identity import DefaultAzureCredential
+from azure.core.credentials import AzureKeyCredential
 
 
 def create_marketplace_subscription(ml_client, model_id, model_name):
@@ -23,7 +23,7 @@ def deploy_model_to_serverless_endpoint(
     # For non-Microsoft models, uncomment the following line
     # create_marketplace_subscription(ml_client, model_id, model_name)
     deploy_serverless_endpoint(ml_client, model_id, endpoint_name)
-    test_deployment(nlu_task)
+    test_deployment(ml_client, endpoint_name, nlu_task)
     print("Finished Model Deployment")
 
 
@@ -37,33 +37,43 @@ def deploy_serverless_endpoint(ml_client, model_id, endpoint_name):
         serverless_endpoint
     ).result()
 
-    endpoint_keys = ml_client.serverless_endpoints.get_keys(endpoint_name)
-    print("Primary Key:", endpoint_keys.primary_key)
+    provisioning_state = ml_client.serverless_endpoints.get(endpoint_name)["provisioning_state"]
+    print(f"Current provisioning state: {provisioning_state}")
 
 
-def test_deployment(nlu_task="chat-completion"):
+def test_deployment(ml_client, endpoint_name, nlu_task="chat-completion"):
     if nlu_task == "chat-completion":
-        client = ChatCompletionsClient(
-            endpoint=os.environ["AZURE_INFERENCE_ENDPOINT"],
-            credential=DefaultAzureCredential(),
-        )
-        model_info = client.get_model_info()
-        print("Model name:", model_info.model_name)
-        print("Model type:", model_info.model_type)
-        print("Model provider name:", model_info.model_provider_name)
+        ep = ml_client.serverless_endpoints.get(endpoint_name)
+        provisioning_state = ep["provisioning_state"]
+        if provisioning_state == "succeeded":
+            inference_endpoint =ep["scoring_uri"]
+            endpoint_keys = ml_client.serverless_endpoints.get_keys(endpoint_name)
+            inference_credential = endpoint_keys.primary_key
+            client = ChatCompletionsClient(
+                endpoint=inference_endpoint,
+                credential=AzureKeyCredential(inference_credential)
+            )
+            model_info = client.get_model_info()
+            print("Model name:", model_info.model_name)
+            print("Model type:", model_info.model_type)
+            print("Model provider name:", model_info.model_provider_name)
 
-        response = client.complete(
-            messages=[
-                SystemMessage(content="You are a helpful assistant."),
-                UserMessage(content="How many languages are in the world?"),
-            ],
-        )
+            response = client.complete(
+                messages=[
+                    SystemMessage(content="You are a helpful assistant."),
+                    UserMessage(content="How many languages are in the world?"),
+                ],
+            )
 
-        print("Response:", response.choices[0].message.content)
-        print("Model:", response.model)
-        print("Usage:")
-        print("\tPrompt tokens:", response.usage.prompt_tokens)
-        print("\tTotal tokens:", response.usage.total_tokens)
-        print("\tCompletion tokens:", response.usage.completion_tokens)
+            print("Response:", response.choices[0].message.content)
+            print("Model:", response.model)
+            print("Usage:")
+            print("\tPrompt tokens:", response.usage.prompt_tokens)
+            print("\tTotal tokens:", response.usage.total_tokens)
+            print("\tCompletion tokens:", response.usage.completion_tokens)
+        else:
+            raise RuntimeError(
+                f"Cannot test the endpoint {endpoint_name}. The provisioning state: '{provisioning_state}'."
+            )
     else:
         raise ValueError(f"Unsupported NLU task: {nlu_task}")
