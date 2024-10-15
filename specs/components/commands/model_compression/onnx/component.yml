@@ -13,8 +13,16 @@ inputs:
     type: uri_folder
   quantization_method:
     type: string
+    description: "Quantization method to use"
+    enum:
+      - awq
   quantization_precision:
     type: string
+    description: "Quantization precision to use"
+    enum:
+      - int4
+      - int8
+      - fp16
   use_mlflow:
     type: boolean
     optional: true

@@ -26,7 +26,7 @@ def parse_args():
 def main():
     args = parse_args()
 
-    model, tokenizer = load_finetuned_model_tokenizer(args.quantization_method, args.pytorch_model_dir)
+    model, tokenizer = load_finetuned_model_tokenizer(args.quantization_method, args.pytorch_model_dir, merged=True)
     model, tokenizer = quantize_model(model, tokenizer, args.quantization_method, args.quantization_precision)
     save_model_tokenizer(model, tokenizer, args.model_dir)
 

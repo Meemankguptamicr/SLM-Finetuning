@@ -32,10 +32,10 @@ def train_model(args, model, tokenizer, train_dataset, val_dataset, target_modul
         mlflow.autolog()
     
     peft_config = LoraConfig(
-        r=args.low_rank_r, #16, 256,
-        lora_alpha=args.low_rank_alpha, #32, 128,
-        lora_dropout=args.low_rank_dropout, #0.05,
-        target_modules=target_modules, #"all-linear",
+        r=args.low_rank_r,
+        lora_alpha=args.low_rank_alpha,
+        lora_dropout=args.low_rank_dropout,
+        target_modules=target_modules,
         bias="none",
         task_type="CAUSAL_LM",
         use_dora=True if args.peft_approach=="dora" else False
@@ -135,5 +135,7 @@ def handle_training_output(trainer, tokenizer, training_output, training_start, 
     
     print(f"Saving the tokenizer to {args.model_dir}")
     tokenizer.save_pretrained(args.model_dir)
-    print(f"Saving the merged model to {args.model_dir}")
+    print(f"Saving the model to {args.model_dir}")
+    trainer.save_model(args.model_dir)
+    print(f"Saving the merged model")
     merge_and_save_model(args.base_model_id, args.model_dir, device)

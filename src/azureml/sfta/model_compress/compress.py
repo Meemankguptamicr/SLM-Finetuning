@@ -2,8 +2,9 @@ from transformers import AutoTokenizer
 from awq import AutoAWQForCausalLM
 
 # Load finetuned model and tokenizer
-def load_finetuned_model_tokenizer(quantization_method, pytorch_model_dir):
+def load_finetuned_model_tokenizer(quantization_method, pytorch_model_dir, merged=True):
     model, tokenizer = None, None
+    pytorch_model_dir = pytorch_model_dir + "/merged" if merged else pytorch_model_dir
     if quantization_method == "awq":
         model, tokenizer = load_finetuned_model_tokenizer_awq(pytorch_model_dir)
     else:

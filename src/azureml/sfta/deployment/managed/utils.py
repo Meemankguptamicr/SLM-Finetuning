@@ -62,14 +62,39 @@ def deploy_finetuned_model_to_managed_endpoint(
         env = Environment(
             name="cpu_inference_env",
             description="Environment for CPU inference",
-            conda_file="cpu.yml",
             image="mcr.microsoft.com/azureml/minimal-py311-inference:latest",
+            conda_file={
+                'name': 'gpu-inference-env',
+                'dependencies': [
+                    'python=3.11',
+                    {
+                        'pip': [
+                            'onnx==1.17.0',
+                            'onnxruntime==1.19.2',
+                            'onnxruntime-gpu==1.19.2'
+                        ]
+                    }
+                ]
+            }
         )
     else:
         env = Environment(
             name="gpu_inference_env",
             description="Environment for GPU inference",
             image="mcr.microsoft.com/azureml/acpt-pytorch-2.2-cuda12.1:latest",
+            conda_file={
+                'name': 'gpu-inference-env',
+                'dependencies': [
+                    'python=3.11',
+                    {
+                        'pip': [
+                            'onnx==1.17.0',
+                            'onnxruntime==1.19.2',
+                            'onnxruntime-gpu==1.19.2'
+                        ]
+                    }
+                ]
+            }
         )
 
     deploy_custom_model_to_online_endpoint(

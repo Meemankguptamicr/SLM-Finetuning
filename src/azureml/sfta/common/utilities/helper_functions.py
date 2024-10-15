@@ -1,3 +1,4 @@
+import os
 import torch
 from transformers import AutoModelForCausalLM, AutoTokenizer, BitsAndBytesConfig
 from peft import PeftModelForCausalLM
@@ -45,7 +46,9 @@ def load_with_transformers(base_model_id, quantization_mode="qat", flash_attenti
 
 
 def merge_and_save_model(base_model_id, model_dir, device="cuda"):
+    merged_dir = f"{model_dir}/merged"
+    os.makedirs(merged_dir, exist_ok=True)
     base_model = AutoModelForCausalLM.from_pretrained(base_model_id).to(device)
     model_to_merge = PeftModelForCausalLM.from_pretrained(base_model, model_dir, local_files_only=True)
     merged_model = model_to_merge.merge_and_unload()
-    merged_model.save_pretrained(model_dir)   
+    merged_model.save_pretrained(merged_dir)   
