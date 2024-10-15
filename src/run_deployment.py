@@ -2,7 +2,7 @@ import argparse
 from azureml.sfta.deployment.deploy_model import deploy_model
 
 def parse_args():
-    parser = argparse.ArgumentParser(description="Unified Deployment Script")
+    parser = argparse.ArgumentParser(description="Model Deployment Script")
 
     parser.add_argument("--run-name", type=str, help="Name of the deployment run", required=True)
     parser.add_argument("--endpoint-name", type=str, help="Name of the endpoint", required=True)
