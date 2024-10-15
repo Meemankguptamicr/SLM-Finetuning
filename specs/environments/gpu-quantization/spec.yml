@@ -1,7 +1,5 @@
 $schema: https://azuremlschemas.azureedge.net/latest/environment.schema.json
 name: gpu-quantization-environment
-image: mcr.microsoft.com/azureml/acpt-pytorch-2.2-cuda12.1:latest
+image: mcr.microsoft.com/azureml/acpt-pytorch-2.2-cuda12.1:18
 description: Environment for quantizing models
 conda_file: conda.yml
-
-

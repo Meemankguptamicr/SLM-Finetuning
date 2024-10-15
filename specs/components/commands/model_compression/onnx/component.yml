@@ -25,7 +25,7 @@ outputs:
 
 code: ../../../../../
 
-environment: azureml:gpu-finetuning-environment@latest
+environment: azureml:gpu-quantization-environment@latest
 
 command: >-
   python src/run_model_compression.py
